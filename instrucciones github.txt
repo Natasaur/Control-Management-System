@@ -1,0 +1,17 @@
+# Crear una rama con su nombre
+git checkout -b nombre-de-tu-rama
+
+# Trabajar, agregar y commitear
+git add .
+git commit -m "Resumen de lo que se implementó"
+
+# Subir tu rama
+git push origin nombre-de-tu-rama
+
+# Cambiar a develop y actualizar
+git checkout develop
+git pull origin develop
+
+# Volver a tu rama y actualizarla con develop
+git checkout nombre-de-tu-rama
+git rebase develop   # o git merge develop
