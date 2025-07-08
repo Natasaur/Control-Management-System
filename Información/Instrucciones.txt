@@ -1,0 +1,5 @@
+Paso 1: Descargar la carpeta de node_modules con npm i.
+Paso 2: Iniciar el servidor con el comando yarn dev, en una terminal integrada de la carpeta server.
+Paso 3: Iniciar la parte del cliente con npm start, en una terminal integrada de la carpeta src.
+Paso 4: Abrir https://www.mongodb.com/es y ingresar los datos del archivo MongoDB Atlas.txt Cuenta de Outlook y MongoDb Atlas que se encuentra en la misma carpeta.
+Paso 5: Si es la primera vez que inicias es necesario agregar la IP en la base de datos.

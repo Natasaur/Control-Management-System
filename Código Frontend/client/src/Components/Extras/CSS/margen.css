@@ -1,0 +1,24 @@
+.navbar-nav .nav-link {
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: blue;
+}
+
+.btn-salir {
+  width: 100%;
+  background-color: red;
+  border: 1px solid #FFFFFF;
+}
+
+.btn-salir span {
+  margin-left: 5px;
+  vertical-align: middle;
+}
+
+.btn-salir .ion-icon {
+  font-size: 2rem;
+}

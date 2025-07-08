@@ -1,0 +1,82 @@
+.calendario {
+    width: 300px;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+    background-color: #FFFFFF;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 3px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+}
+
+.header h1 {
+    font-size: 12px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.modalidad select {
+    width: 100%;
+    padding: 2px;
+    margin-bottom: 3px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.dias-semana {
+    display: flex;
+    background-color: #f2f2f2;
+    border-radius: 5px;
+    margin-bottom: 2px;
+}
+
+.dias-semana div {
+    flex: 1;
+    text-align: center;
+    font-weight: bold;
+    padding: 2px;
+}
+
+.dias {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.day {
+    text-align: center;
+    padding: 2px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 10px;
+}
+
+.empty-day {
+    background-color: #f5f5f5;
+}
+
+.different-month {
+    color: #ccc;
+}
+
+.selected {
+    background-color: #3498db;
+    color: #fff;
+}
+
+.existing {
+    background-color: #FD7E14;
+    color: #fff;
+}
+
+.guardarF {
+    width: 100%;
+}
+
