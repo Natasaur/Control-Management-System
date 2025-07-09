@@ -65,4 +65,18 @@ api.post(
   [authAdmin],
   asistenciasController.porcentajeAsistenciaAlumno
 );
+
+api.post(
+  "/asistencia/buscar/resumen/grupo",
+  //[authAdmin],
+  asistenciasController.resumenAsistenciasPorGrupo
+);
+
+api.post(
+  "/asistencia/buscar/alumnos/con-faltas",
+  //[authAdmin],
+  asistenciasController.alumnosConFaltas
+);
+
+
 module.exports = api;

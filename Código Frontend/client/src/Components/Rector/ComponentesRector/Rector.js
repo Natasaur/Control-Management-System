@@ -1,32 +1,139 @@
-import React from 'react';
-import { Container, Card, Row, Col } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Card, Row, Col, Form, Button, Spinner, Alert } from 'react-bootstrap';
 import Margen from '../../Extras/MargenRector';
 import GraficaBarraCarrera from '../grafica/Carrera/GraficaBarrasCarrera';
 import GraficaBarraCuatrimestre from '../grafica/Cuatrimestre/GraficaBarraCuatrimestre';
 import GraficaBarraPlantel from '../grafica/Plantel/GraficaBarraPlantel';
 import GraficaBarraTurno from '../grafica/Turno/GraficaBarrasTurno';
 import GraficaBarraGrupo from '../grafica/Grupos/GraficaBarraGrupos';
-import GraficaBarraAlumno from '../grafica/Alumno/GraficaBarraAlumno';
+import GraficaAsistencias from '../grafica/Asistencias/GraficaAsistencias';
 import Alertas from './Alertas/Alertas';
-
+import api from '../../../api/axios';
 
 export default function Rector() {
+    const [grupos, setGrupos] = useState([]);
+    const [grupoSeleccionado, setGrupoSeleccionado] = useState("");
+    const [fechaInicio, setFechaInicio] = useState("");
+    const [fechaFin, setFechaFin] = useState("");
+    const [filtros, setFiltros] = useState(null);
+    const [loadingGrupos, setLoadingGrupos] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchGrupos = async () => {
+            try {
+                const res = await api.get("/grupo/buscar");
+                const soloGrupos = res.data.map((g) => g.grupo);
+                setGrupos(soloGrupos);
+            } catch (err) {
+                console.error(err);
+                setError("Error al cargar grupos");
+            } finally {
+                setLoadingGrupos(false);
+            }
+        };
+
+        fetchGrupos();
+    }, []);
+
+    const handleBuscar = () => {
+        if (!grupoSeleccionado || !fechaInicio || !fechaFin) {
+            setError("Todos los campos son obligatorios.");
+            return;
+        }
+        setError(null);
+        setFiltros({
+            grupo: grupoSeleccionado,
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin
+        });
+    };
+
     return (
         <>
             <Margen />
             <Container>
                 <div className="container my-4">
                     <Row style={{ marginBottom: '2rem' }}>
-                        <Col md={6}>
-                            <Card className="grafica-1">
-                                <Card.Header>
-                                    <h3>Alumno</h3>
-                                </Card.Header>
+                        <Col md={12}>
+                        <Card>
+                            <Card.Header>Asistencia grupal por día</Card.Header>
                                 <Card.Body>
-                                    <GraficaBarraAlumno />
+                                    {loadingGrupos && <Spinner animation="border" />}
+                                        {error && <Alert variant="danger">{error}</Alert>}
+                                        {!loadingGrupos && !error && (
+                                            <Form>
+                                                <Row>
+                                                    <Col md={4}>
+                                                        <Form.Group>
+                                                            <Form.Label>Grupo</Form.Label>
+                                                            <Form.Select
+                                                                value={grupoSeleccionado}
+                                                                onChange={(e) => setGrupoSeleccionado(e.target.value)}
+                                                            >
+                                                                <option value="">-- Selecciona Grupo --</option>
+                                                                {grupos.map((grupo) => (
+                                                                    <option key={grupo} value={grupo}>
+                                                                        {grupo}
+                                                                    </option>
+                                                                ))}
+                                                            </Form.Select>
+                                                        </Form.Group>
+                                                    </Col>
+                                                    <Col md={3}>
+                                                        <Form.Group>
+                                                            <Form.Label>Fecha Inicio</Form.Label>
+                                                            <Form.Control
+                                                                type="date"
+                                                                value={fechaInicio}
+                                                                onChange={(e) => setFechaInicio(e.target.value)}
+                                                            />
+                                                        </Form.Group>
+                                                    </Col>
+                                                    <Col md={3}>
+                                                        <Form.Group>
+                                                            <Form.Label>Fecha Fin</Form.Label>
+                                                            <Form.Control
+                                                                type="date"
+                                                                value={fechaFin}
+                                                                onChange={(e) => setFechaFin(e.target.value)}
+                                                            />
+                                                        </Form.Group>
+                                                    </Col>
+                                                    <Col md={2} className="d-flex align-items-end">
+                                                        <Button variant="primary" onClick={handleBuscar}>
+                                                            Buscar
+                                                        </Button>
+                                                    </Col>
+                                                </Row>
+                                            </Form>
+                                        )}
                                 </Card.Body>
                             </Card>
                         </Col>
+                    </Row>
+                    
+                    {filtros && (
+                        <Row className="mb-4">
+                            <Col md={12}>
+                                <Card className="grafica-1">
+                                    <Card.Header>
+                                        <h3>Asistencias y Faltas</h3>
+                                    </Card.Header>
+                                    <Card.Body>
+                                        <GraficaAsistencias
+                                            grupo={filtros.grupo}
+                                            fechaInicio={filtros.fecha_inicio}
+                                            fechaFin={filtros.fecha_fin}
+                                        />
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
+                    )}
+
+
+                    <Row style={{ marginBottom: '2rem' }}>
                         <Col md={6}>
                             <Card className="grafica-2">
                                 <Card.Header>
