@@ -1,80 +1,153 @@
-// client/src/Components/dashboard.js
+import React, { useEffect, useState } from 'react';
+import { Row, Col, Card, Spinner, Alert } from 'react-bootstrap';
+import { Bar, Pie, Line, Doughnut } from 'react-chartjs-2';
 
-import React from "react";
-import { Card, Button, Row, Col, Container } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from 'chart.js';
 
-const Dashboard = () => {
-  const navigate = useNavigate();
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
-  const nombre = Cookies.get("nombre") || "Usuario";
-  const apellidoPaterno = Cookies.get("apellido_paterno") || "";
-  const apellidoMaterno = Cookies.get("apellido_materno") || "";
-  const rol = Cookies.get("rol") || "";
+export default function Dashboard() {
+  const [datosBarras, setDatosBarras] = useState(null);
+  const [datosPie, setDatosPie] = useState(null);
+  const [datosLine, setDatosLine] = useState(null);
+  const [datosDoughnut, setDatosDoughnut] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const cerrarSesion = () => {
-    Cookies.remove("token");
-    Cookies.remove("rol");
-    Cookies.remove("matricula");
-    Cookies.remove("plantel");
-    Cookies.remove("nombre");
-    Cookies.remove("apellido_paterno");
-    Cookies.remove("apellido_materno");
+  useEffect(() => {
+    cargarDatos();
+  }, []);
 
-    navigate("/", { replace: true });
+  const cargarDatos = async () => {
+    try {
+      // Aquí podrías traer datos reales de tus endpoints
+      // Ejemplo:
+      // const res = await axios.get('/api/dashboard/data');
+      // setDatosBarras(res.data.barras);
+
+      // Simulando datos de ejemplo:
+      setDatosBarras({
+        labels: ['Atizapán', 'Zona Rosa'],
+        datasets: [
+          {
+            label: 'Asistencias',
+            data: [120, 90],
+            backgroundColor: '#36A2EB'
+          }
+        ]
+      });
+
+      setDatosPie({
+        labels: ['INSC', 'INFO', 'INAD'],
+        datasets: [
+          {
+            data: [300, 50, 100],
+            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56']
+          }
+        ]
+      });
+
+      setDatosLine({
+        labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+        datasets: [
+          {
+            label: 'Asistencias',
+            data: [30, 50, 40, 70, 60],
+            borderColor: '#36A2EB',
+            backgroundColor: '#36A2EB',
+            fill: false
+          }
+        ]
+      });
+
+      setDatosDoughnut({
+        labels: ['>3 faltas', '≤3 faltas'],
+        datasets: [
+          {
+            data: [20, 80],
+            backgroundColor: ['#FF6384', '#36A2EB']
+          }
+        ]
+      });
+
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError('Error al cargar datos del dashboard.');
+      setLoading(false);
+    }
   };
 
+  if (loading) {
+    return <Spinner animation="border" />;
+  }
+
+  if (error) {
+    return <Alert variant="danger">{error}</Alert>;
+  }
+
   return (
-    <Container className="mt-5">
-      <Row className="mb-4 justify-content-between align-items-center">
-        <Col>
-          <h2>
-            Bienvenidx {nombre} {apellidoPaterno} {apellidoMaterno}
-          </h2>
-          <p>Rol: {rol}</p>
+    <>
+      <h2 className="mb-4">Dashboard General</h2>
+
+      <Row className="mb-4">
+        <Col md={6}>
+          <Card>
+            <Card.Header>Asistencias por Plantel</Card.Header>
+            <Card.Body>
+              <Bar data={datosBarras} options={{ responsive: true }} />
+            </Card.Body>
+          </Card>
         </Col>
-        <Col xs="auto">
-          <Button variant="danger" onClick={cerrarSesion}>
-            Cerrar sesión
-          </Button>
+        <Col md={6}>
+          <Card>
+            <Card.Header>Distribución de Carreras</Card.Header>
+            <Card.Body>
+              <Pie data={datosPie} options={{ responsive: true }} />
+            </Card.Body>
+          </Card>
         </Col>
       </Row>
 
-      <Row xs={1} md={2} className="g-4">
-        <Col>
+      <Row>
+        <Col md={6}>
           <Card>
+            <Card.Header>Evolución de Asistencias</Card.Header>
             <Card.Body>
-              <Card.Title>Administración</Card.Title>
-              <Button as={Link} to="/Iniciousuario" variant="primary">
-                Ir
-              </Button>
+              <Line data={datosLine} options={{ responsive: true }} />
             </Card.Body>
           </Card>
         </Col>
-        <Col>
+        <Col md={6}>
           <Card>
+            <Card.Header>Porcentaje Alumnos con más de 3 Faltas</Card.Header>
             <Card.Body>
-              <Card.Title>Consultor</Card.Title>
-              <Button as={Link} to="/Consultor" variant="primary">
-                Ir
-              </Button>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col>
-          <Card>
-            <Card.Body>
-              <Card.Title>Rector</Card.Title>
-              <Button as={Link} to="/Rector" variant="primary">
-                Ir
-              </Button>
+              <Doughnut data={datosDoughnut} options={{ responsive: true }} />
             </Card.Body>
           </Card>
         </Col>
       </Row>
-    </Container>
+    </>
   );
-};
-
-export default Dashboard;
+}

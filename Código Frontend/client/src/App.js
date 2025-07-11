@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 //import { useNavigate } from 'react-router-dom';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './Components/layout/MainLayout';
 import Dashboard from './Components/dashboard';
 import Consultor from './Components/Consultor/Consultor';
@@ -148,38 +148,34 @@ const App = () => {
 };*/
 
   return (
-    
-    <Routes>
-    {/** PUBLIC ROUTES */}
-      <Route path="/" element={<Login setToken={ setToken }  />} />
-      <Route path="/password" element={<Password />} />
-      <Route path="/404" element={<NotFound />} />
+    <BrowserRouter>
+      <Routes>
+      {/** PUBLIC ROUTES */}
+        <Route path="/" element={<Login setToken={ setToken } />} />
+        <Route path="/password" element={<Password />} />
+        <Route path="/404" element={<NotFound />} />
 
-      {/** PRIVATE ROUTES IN LAYOUT */}
-      {isAuthenticated && (
-        <Route
-          element={
-            <PrivateRoute>
-              <MainLayout />
-            </PrivateRoute>
-          }
-        >
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/Iniciousuario" element={<Iniciousuario />} />
-          <Route path="/Inicio-usuario" element={<Inicio />} />
-          <Route path="/Parametros" element={<ParametroA />} />
-          <Route path="/Parametro" element={<Parametro />} />
-          <Route path="/Rector" element={<Rector />} />
-          <Route path="/Consultor" element={<Consultor />} />
-          <Route path="/seleccionar" element={<Selecionar />} />
-          <Route path="/cambioA" element={<CambioA />} />
-          <Route path="/cambioB" element={<CambioB />} />
-        </Route>
-      )}
+        {/** PRIVATE ROUTES IN LAYOUT */}
+        {isAuthenticated && (
+          <Route element={ <PrivateRoute> <MainLayout /> </PrivateRoute> }>
+            <Route index element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/Iniciousuario" element={<Iniciousuario />} />
+            <Route path="/Inicio-usuario" element={<Inicio />} />
+            <Route path="/Parametros" element={<ParametroA />} />
+            <Route path="/Parametro" element={<Parametro />} />
+            <Route path="/Rector" element={<Rector />} />
+            <Route path="/Consultor" element={<Consultor />} />
+            <Route path="/seleccionar" element={<Selecionar />} />
+            <Route path="/cambioA" element={<CambioA />} />
+            <Route path="/cambioB" element={<CambioB />} />
+          </Route>
+        )}
 
-      {/** CATCH ALL */}
-      <Route path='*' element={<NotFound />} />
-    </Routes>
+        {/** CATCH ALL */}
+        <Route path='*' element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

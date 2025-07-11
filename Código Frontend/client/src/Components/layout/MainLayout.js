@@ -49,6 +49,7 @@ export default function MainLayout() {
 
       <Container className="mt-4">
         <Outlet />
+        
       </Container>
     </>
   );

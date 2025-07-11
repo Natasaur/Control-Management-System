@@ -141,347 +141,69 @@ async function obtenerAsistencia(req, res) {
 //A PARTIR DE LA POSICION 1 HASTA LA POSICION 14 DEL ARRAY SE ENCUENTRAN OBJETOS JSON DONDE CADA UNO CONTIENE ATRIBUTOS NECESARIOS PARA MOSTRAR EL PORCENTAJE EN LAS GRAFICAS
 async function porcentajeAsistenciaPlantel(req, res) {
   try {
-    const { semana } = req.body;
+    const { fechaInicio, fechaFin } = req.body;
 
-    //FECHAS DE ASISTENCIAS Y LARGO DE CANTIDAD DE ASISTENCIAS
-    const fechas = await Fechas_asistencias.find({ semana });
+    const fechas = await Fechas_asistencias.find({
+      fecha: { $gte: fechaInicio, $lte: fechaFin }
+    });
+
     const fechasLargo = fechas.length;
-    const arrayFechas = [];
+    const arrayFechas = fechas.map(f => f.fecha);
 
-    //PASAR EL JSON DE ASISTENCIAS A UN ARRAY
-    for (var a = 0; a < fechasLargo; a++) {
-      arrayFechas.push(fechas[a].fecha);
+    const alumnos = await Alumno.find();
+    const planteles = await Plantel.find();
+
+    // Agrupar alumnos por plantel
+    const alumnosPorPlantel = {};
+    for (const plantel of planteles) {
+      alumnosPorPlantel[plantel.clave] = [];
     }
 
-    //OBTENER LISTA DE ALUMNOS EXISTENTES
-    const alumnos = await Alumno.find();
-
-    //ARREGLOS PARA GUARDAR LA MATRICULA DE LOS ALUMNOS POR PLANTEL
-    const alumnosA = [];
-    const alumnosH = [];
-    const alumnosC = [];
-    const alumnosU = [];
-    const alumnosE = [];
-    const alumnosX = [];
-    const alumnosI = [];
-    const alumnosN = [];
-    const alumnosR = [];
-    const alumnosT = [];
-    const alumnosS = [];
-    const alumnosZ = [];
-    const alumnosV = [];
-
-    //GUARDAR LAS MATRICULAS DE LOS ALUMNOS EN ARRAYS DE ACUERDO AL PLANTEL AL QUE PERTENECEN
-    for (var i = 0; i < alumnos.length; i++) {
-      switch (alumnos[i].grupo[1]) {
-        case "A":
-          alumnosA.push(alumnos[i].matricula);
-          break;
-
-        case "H":
-          alumnosH.push(alumnos[i].matricula);
-          break;
-
-        case "C":
-          alumnosC.push(alumnos[i].matricula);
-          break;
-
-        case "U":
-          alumnosU.push(alumnos[i].matricula);
-          break;
-
-        case "E":
-          alumnosE.push(alumnos[i].matricula);
-          break;
-
-        case "X":
-          alumnosX.push(alumnos[i].matricula);
-          break;
-
-        case "I":
-          alumnosI.push(alumnos[i].matricula);
-          break;
-
-        case "N":
-          alumnosN.push(alumnos[i].matricula);
-          break;
-
-        case "R":
-          alumnosR.push(alumnos[i].matricula);
-          break;
-
-        case "T":
-          alumnosT.push(alumnos[i].matricula);
-          break;
-
-        case "S":
-          alumnosS.push(alumnos[i].matricula);
-          break;
-
-        case "Z":
-          alumnosZ.push(alumnos[i].matricula);
-          break;
-
-        case "V":
-          alumnosV.push(alumnos[i].matricula);
-          break;
-        default:
-          break;
+    for (const alumno of alumnos) {
+      const letraPlantel = alumno.grupo[1];
+      if (alumnosPorPlantel[letraPlantel]) {
+        alumnosPorPlantel[letraPlantel].push(alumno.matricula);
       }
     }
 
-    //CONSTANTES DONDE SE GUARDA LA CANTIDAD DE ALUMNOS ENCONTRADOS
-    const cantidadAlumnosA = alumnosA.length;
-    const cantidadAlumnosH = alumnosH.length;
-    const cantidadAlumnosC = alumnosC.length;
-    const cantidadAlumnosU = alumnosU.length;
-    const cantidadAlumnosE = alumnosE.length;
-    const cantidadAlumnosX = alumnosX.length;
-    const cantidadAlumnosI = alumnosI.length;
-    const cantidadAlumnosN = alumnosN.length;
-    const cantidadAlumnosR = alumnosR.length;
-    const cantidadAlumnosT = alumnosT.length;
-    const cantidadAlumnosS = alumnosS.length;
-    const cantidadAlumnosZ = alumnosZ.length;
-    const cantidadAlumnosV = alumnosV.length;
+    const respuesta = [];
 
-    //VARIABLES PARA GUARDAR LA CANTIDAD MAXIMA DE ASISTENCIAS DE ACUERDO AL PLANTEL
-    const asistenciasMaximasA = cantidadAlumnosA * fechasLargo;
-    const asistenciasMaximasH = cantidadAlumnosH * fechasLargo;
-    const asistenciasMaximasC = cantidadAlumnosC * fechasLargo;
-    const asistenciasMaximasU = cantidadAlumnosU * fechasLargo;
-    const asistenciasMaximasE = cantidadAlumnosE * fechasLargo;
-    const asistenciasMaximasX = cantidadAlumnosX * fechasLargo;
-    const asistenciasMaximasI = cantidadAlumnosI * fechasLargo;
-    const asistenciasMaximasN = cantidadAlumnosN * fechasLargo;
-    const asistenciasMaximasR = cantidadAlumnosR * fechasLargo;
-    const asistenciasMaximasT = cantidadAlumnosT * fechasLargo;
-    const asistenciasMaximasS = cantidadAlumnosS * fechasLargo;
-    const asistenciasMaximasZ = cantidadAlumnosZ * fechasLargo;
-    const asistenciasMaximasV = cantidadAlumnosV * fechasLargo;
+    for (const plantel of planteles) {
+      const alumnosPlantel = alumnosPorPlantel[plantel.clave] || [];
+      const cantidadAlumnos = alumnosPlantel.length;
+      const asistenciasMaximas = cantidadAlumnos * fechasLargo;
 
-    //BUSCAR Y GUARDAR LA CANTIDAD DE ASISTENCIAS REGISTRADAS POR MATRICULAS Y PLANTEL
-    const asistenciasRegistradasPlantelA = await Asistencia.find({
-      matricula: { $in: alumnosA },
-      fecha: { $in: arrayFechas },
+      let asistenciasRegistradas = 0;
+      if (cantidadAlumnos > 0) {
+        asistenciasRegistradas = await Asistencia.countDocuments({
+          matricula: { $in: alumnosPlantel },
+          fecha: { $in: arrayFechas },
+        });
+      }
+
+      const porcentajeAsistencia = asistenciasMaximas
+        ? parseFloat(
+            ((asistenciasRegistradas * 100) / asistenciasMaximas).toFixed(2)
+          )
+        : 0;
+
+      respuesta.push({
+        plantel: plantel.nombre,
+        cantidadAlumnos,
+        asistenciasMaximas,
+        asistenciasRegistradas,
+        porcentajeAsistencia,
+      });
+    }
+
+    res.status(200).json({
+      fechas: arrayFechas,
+      cantidadFechas: fechasLargo,
+      datos: respuesta,
     });
-    const asistenciasRegistradasPlantelH = await Asistencia.find({
-      matricula: { $in: alumnosH },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelC = await Asistencia.find({
-      matricula: { $in: alumnosC },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelU = await Asistencia.find({
-      matricula: { $in: alumnosU },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelE = await Asistencia.find({
-      matricula: { $in: alumnosE },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelX = await Asistencia.find({
-      matricula: { $in: alumnosX },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelI = await Asistencia.find({
-      matricula: { $in: alumnosI },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelN = await Asistencia.find({
-      matricula: { $in: alumnosN },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelR = await Asistencia.find({
-      matricula: { $in: alumnosR },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelT = await Asistencia.find({
-      matricula: { $in: alumnosT },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelS = await Asistencia.find({
-      matricula: { $in: alumnosS },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelZ = await Asistencia.find({
-      matricula: { $in: alumnosZ },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPlantelV = await Asistencia.find({
-      matricula: { $in: alumnosV },
-      fecha: { $in: arrayFechas },
-    });
-
-    //PORCENTAJES DE ASISTENCIAS POR PLANTEL
-    const porcentajeAsistenciaPlantelA =
-      (asistenciasRegistradasPlantelA.length * 100) / asistenciasMaximasA;
-
-    const porcentajeAsistenciaPlantelH =
-      (asistenciasRegistradasPlantelH.length * 100) / asistenciasMaximasH;
-
-    const porcentajeAsistenciaPlantelC =
-      (asistenciasRegistradasPlantelC.length * 100) / asistenciasMaximasC;
-
-    const porcentajeAsistenciaPlantelU =
-      (asistenciasRegistradasPlantelU.length * 100) / asistenciasMaximasU;
-
-    const porcentajeAsistenciaPlantelE =
-      (asistenciasRegistradasPlantelE.length * 100) / asistenciasMaximasE;
-
-    const porcentajeAsistenciaPlantelX =
-      (asistenciasRegistradasPlantelX.length * 100) / asistenciasMaximasX;
-
-    const porcentajeAsistenciaPlantelI =
-      (asistenciasRegistradasPlantelI.length * 100) / asistenciasMaximasI;
-
-    const porcentajeAsistenciaPlantelN =
-      (asistenciasRegistradasPlantelN.length * 100) / asistenciasMaximasN;
-
-    const porcentajeAsistenciaPlantelR =
-      (asistenciasRegistradasPlantelR.length * 100) / asistenciasMaximasR;
-
-    const porcentajeAsistenciaPlantelT =
-      (asistenciasRegistradasPlantelT.length * 100) / asistenciasMaximasT;
-
-    const porcentajeAsistenciaPlantelS =
-      (asistenciasRegistradasPlantelS.length * 100) / asistenciasMaximasS;
-
-    const porcentajeAsistenciaPlantelZ =
-      (asistenciasRegistradasPlantelZ.length * 100) / asistenciasMaximasZ;
-
-    const porcentajeAsistenciaPlantelV =
-      (asistenciasRegistradasPlantelV.length * 100) / asistenciasMaximasV;
-
-    const response = [
-      {
-        fechas: arrayFechas,
-        cantidadFechas: fechasLargo,
-      },
-      {
-        plantel: "ATIZAPAN",
-        cantidadAlumnos: cantidadAlumnosA,
-        asistenciasMaximas: asistenciasMaximasA,
-        aistenciasRegistradas: asistenciasRegistradasPlantelA.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelA.toFixed(2)
-        ),
-      },
-      {
-        plantel: "CHALCO",
-        cantidadAlumnos: cantidadAlumnosH,
-        asistenciasMaximas: asistenciasMaximasH,
-        aistenciasRegistradas: asistenciasRegistradasPlantelH.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelH.toFixed(2)
-        ),
-      },
-      {
-        plantel: "COACALCO",
-        cantidadAlumnos: cantidadAlumnosC,
-        asistenciasMaximas: asistenciasMaximasC,
-        aistenciasRegistradas: asistenciasRegistradasPlantelC.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelC.toFixed(2)
-        ),
-      },
-      {
-        plantel: "CUAUTITLAN",
-        cantidadAlumnos: cantidadAlumnosU,
-        asistenciasMaximas: asistenciasMaximasU,
-        aistenciasRegistradas: asistenciasRegistradasPlantelU.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelU.toFixed(2)
-        ),
-      },
-      {
-        plantel: "ECATEPEC",
-        cantidadAlumnos: cantidadAlumnosE,
-        asistenciasMaximas: asistenciasMaximasE,
-        aistenciasRegistradas: asistenciasRegistradasPlantelE.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelE.toFixed(2)
-        ),
-      },
-      {
-        plantel: "IXTAPALUCA",
-        cantidadAlumnos: cantidadAlumnosX,
-        asistenciasMaximas: asistenciasMaximasX,
-        aistenciasRegistradas: asistenciasRegistradasPlantelX.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelX.toFixed(2)
-        ),
-      },
-      {
-        plantel: "IZTAPALAPA",
-        cantidadAlumnos: cantidadAlumnosI,
-        asistenciasMaximas: asistenciasMaximasI,
-        aistenciasRegistradas: asistenciasRegistradasPlantelI.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelI.toFixed(2)
-        ),
-      },
-      {
-        plantel: "NEZA",
-        cantidadAlumnos: cantidadAlumnosN,
-        asistenciasMaximas: asistenciasMaximasN,
-        aistenciasRegistradas: asistenciasRegistradasPlantelN.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelN.toFixed(2)
-        ),
-      },
-      {
-        plantel: "REYES",
-        cantidadAlumnos: cantidadAlumnosR,
-        asistenciasMaximas: asistenciasMaximasR,
-        aistenciasRegistradas: asistenciasRegistradasPlantelR.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelR.toFixed(2)
-        ),
-      },
-      {
-        plantel: "TOLUCA",
-        cantidadAlumnos: cantidadAlumnosT,
-        asistenciasMaximas: asistenciasMaximasT,
-        aistenciasRegistradas: asistenciasRegistradasPlantelT.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelT.toFixed(2)
-        ),
-      },
-      {
-        plantel: "TOREO",
-        cantidadAlumnos: cantidadAlumnosS,
-        asistenciasMaximas: asistenciasMaximasS,
-        aistenciasRegistradas: asistenciasRegistradasPlantelS.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelS.toFixed(2)
-        ),
-      },
-      {
-        plantel: "ZONA ROSA",
-        cantidadAlumnos: cantidadAlumnosZ,
-        asistenciasMaximas: asistenciasMaximasZ,
-        aistenciasRegistradas: asistenciasRegistradasPlantelZ.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelZ.toFixed(2)
-        ),
-      },
-      {
-        plantel: "HAVRE",
-        cantidadAlumnos: cantidadAlumnosV,
-        asistenciasMaximas: asistenciasMaximasV,
-        aistenciasRegistradas: asistenciasRegistradasPlantelV.length,
-        porcentajeAsistencia: parseFloat(
-          porcentajeAsistenciaPlantelV.toFixed(2)
-        ),
-      },
-    ];
-
-    res.status(200).send(response);
   } catch (error) {
-    res.status(400).send({ msg: "Error al obtener los datos" });
-    throw error;
+    console.log(error);
+    res.status(400).json({ msg: "Error al obtener datos" });
   }
 }
 
