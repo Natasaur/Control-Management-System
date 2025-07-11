@@ -1,4 +1,6 @@
-# Crear una rama con su nombre
+# Crear una rama desde develop
+git checkout develop
+git pull origin develop
 git checkout -b nombre-de-tu-rama
 
 # Trabajar, agregar y commitear
@@ -8,10 +10,25 @@ git commit -m "Resumen de lo que se implementó"
 # Subir tu rama
 git push origin nombre-de-tu-rama
 
-# Cambiar a develop y actualizar
+# Mantener tu rama al día con develop
 git checkout develop
 git pull origin develop
-
-# Volver a tu rama y actualizarla con develop
 git checkout nombre-de-tu-rama
 git rebase develop   # o git merge develop
+
+# Subir cambios actualizados
+git push origin nombre-de-tu-rama
+
+# Finalmente, hacer el Pull Request en GitHub
+Cuándo usar rebase vs merge
+✅ Rebase:
+
+Deja tu historial más limpio.
+
+“Reescribe” tu rama para poner tus commits encima de develop.
+
+✅ Merge:
+
+Más seguro si no dominas rebase.
+
+Genera un commit de merge → historial un poco más sucio, pero sin reescribir nada.

@@ -1287,6 +1287,123 @@ async function saludar() {
   console.log("Hola buenas como estan");
 }
 
+
+
+//-----     NUEVAS FUNCIONES     -------//
+const moment = require("moment");
+const DiasNoLaborables = require("../models/dias_no_laborables");
+
+async function resumenAsistenciasPorGrupo(req, res) {
+  try {
+    const {
+      grupo,
+      fecha_inicio,
+      fecha_fin
+    } = req.body;
+
+    // total alumnos
+    const totalAlumnos = await Alumno.countDocuments({
+      grupo
+    });
+
+    // días no laborables
+    const diasNoLaborables = await DiasNoLaborables.find({
+      fecha: { $gte: fecha_inicio, $lte: fecha_fin }
+    }).distinct("fecha");
+
+    let fechaCursor = moment(fecha_inicio, "DD/MM/YYYY");
+    const fechaFinMoment = moment(fecha_fin, "DD/MM/YYYY");
+
+    const resumen = [];
+
+    while (fechaCursor.isSameOrBefore(fechaFinMoment)) {
+      const fechaStr = fechaCursor.format("DD/MM/YYYY");
+
+      if (diasNoLaborables.includes(fechaStr)) {
+        fechaCursor.add(1, "day");
+        continue;
+      }
+
+      const asistenciasDia = await Asistencia.countDocuments({
+        grupo,
+        fecha: fechaStr,
+        tipo_asistencia: { $in: ["normal", "justificada"] }
+      });
+
+      resumen.push({
+        fecha: fechaStr,
+        asistencias: asistenciasDia,
+        faltas: totalAlumnos - asistenciasDia
+      });
+
+      fechaCursor.add(1, "day");
+    }
+
+    return res.json({
+      grupo,
+      dias: resumen
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error al obtener el resumen de asistencias." });
+  }
+}
+
+async function alumnosConFaltas(req, res) {
+  try {
+    const {
+      grupo,
+      fecha_inicio,
+      fecha_fin,
+      min_faltas
+    } = req.body;
+
+    const alumnos = await Alumno.find({
+      grupo
+    });
+
+    const alumnosConFaltas = [];
+
+    for (const alumno of alumnos) {
+      const asistencias = await Asistencia.find({
+        matricula: alumno.matricula,
+        fecha: { $gte: fecha_inicio, $lte: fecha_fin },
+        tipo_asistencia: { $in: ["normal", "justificada"] }
+      }).distinct("fecha");
+
+      let fechaCursor = moment(fecha_inicio, "DD/MM/YYYY");
+      const fechaFinMoment = moment(fecha_fin, "DD/MM/YYYY");
+      let faltas = 0;
+
+      while (fechaCursor.isSameOrBefore(fechaFinMoment)) {
+        const fechaStr = fechaCursor.format("DD/MM/YYYY");
+
+        if (!asistencias.includes(fechaStr)) {
+          faltas++;
+        }
+
+        fechaCursor.add(1, "day");
+      }
+
+      if (faltas >= parseInt(min_faltas)) {
+        alumnosConFaltas.push({
+          matricula: alumno.matricula,
+          nombre: `${alumno.nombre} ${alumno.apellido_paterno} ${alumno.apellido_materno}`,
+          grupo: alumno.grupo,
+          faltas
+        });
+      }
+    }
+
+    return res.json(alumnosConFaltas);
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error al obtener alumnos con faltas." });
+  }
+}
+
 module.exports = {
   crearAsistenciaIndividual,
   crearListaAsistencias,
@@ -1299,4 +1416,6 @@ module.exports = {
   porcentajeAsistenciaGrupo,
   porcentajeAsistenciaAlumno,
   saludar,
+  resumenAsistenciasPorGrupo,
+  alumnosConFaltas,
 };

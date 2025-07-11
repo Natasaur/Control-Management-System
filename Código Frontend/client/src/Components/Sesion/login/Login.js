@@ -7,7 +7,8 @@ import Cookies from "js-cookie";
 import backgroundImage from "../../../img/UTC-1.jpg";
 import { ENV } from "../../../utils/Constants";
 
-const Login = ({ setToken, setRol }) => {
+//const Login = ({ setToken, setRol }) => {
+const Login = ({ setToken }) => {
   const BASE_PATH = ENV.BASE_PATH;
   const inicioRoute = ENV.API_ROUTES.nvQNHOaD1pGaVnr6MEpaeRsYAxiH8kM4L0;
   const [mostrarpassword, setMostrarpassword] = useState(false);
@@ -26,9 +27,14 @@ const Login = ({ setToken, setRol }) => {
       return;
     }
 
-    const datosUsuario = {
+    /*const datosUsuario = {
       correo: correo,
       password: password,
+    };*/
+
+    const datosUsuario = {
+      correo,
+      password,
     };
 
     const url = `${BASE_PATH}${inicioRoute}`;
@@ -43,62 +49,34 @@ const Login = ({ setToken, setRol }) => {
         const datos = response.data;
 
         if (datos.access) {
-          const tiempoExpiracion = 0.5;
+          const tiempoExpiracion = 0.5; //medio dia
+
+          //Guardar token
           Cookies.set("token", datos.access, { expires: tiempoExpiracion });
 
-          if (datos.existenciaUsuario && datos.existenciaUsuario.matricula) {
+          //Guardar otros datos 
+          if (datos.existenciaUsuario?.matricula) {
             Cookies.set("matricula", datos.existenciaUsuario.matricula, {
               expires: tiempoExpiracion,
             });
-
-            if (datos.existenciaUsuario.plantel) {
-              Cookies.set("plantel", datos.existenciaUsuario.plantel, {
-                expires: tiempoExpiracion,
-              });
-            } else {
-              console.log(
-                "No se encontró el campo 'plantel' en la respuesta del servidor"
-              );
-            }
-          } else {
-            console.log(
-              "No se encontró la matrícula en la respuesta del servidor"
-            );
           }
 
-          Cookies.set("nombre", datos.existenciaUsuario.nombre, {
-            expires: tiempoExpiracion,
-          });
-          Cookies.set("apellido_paterno", datos.existenciaUsuario.apellido_paterno, {
-            expires: tiempoExpiracion,
-          });
-          Cookies.set("apellido_materno", datos.existenciaUsuario.apellido_materno, {
-            expires: tiempoExpiracion,
-          });
+          if (datos.existenciaUsuario?.plantel) {
+            Cookies.set("plantel", datos.existenciaUsuario.plantel, {
+              expires: tiempoExpiracion,
+            });
+          }
 
+          Cookies.set("nombre", datos.existenciaUsuario.nombre || "",{ expires: tiempoExpiracion });
+          Cookies.set("apellido_paterno", datos.existenciaUsuario.apellido_paterno || "",{ expires: tiempoExpiracion });
+          Cookies.set("apellido_materno", datos.existenciaUsuario.apellido_materno || "",{ expires: tiempoExpiracion });
 
-          // Usar siempre un único rol, por ejemplo "A"
-          const rol = datos.existenciaUsuario.rol;
-          //const rol = "A";
-          Cookies.set("rol", rol, { expires: tiempoExpiracion });
+          // Actualizar estado en APP
+          //setToken(datos.access);
 
-          // Actualizar el estado en el componente App
-          setToken(datos.access);
-          setRol(rol);
-
+          //Redirigir siempre al dashboard
           navigate("/dashboard");
 
-          /*
-          // Redirigir a la página correspondiente según el rol
-          if (rol === "A") {
-            navigate("/Iniciousuario");
-          } else if (rol === "AP") {
-            navigate("/Inicio-usuario");
-          } else if (rol === "C") {
-            navigate("/Consultor");
-          } else if (rol === "U") {
-            navigate("/Rector");
-          }*/
         } else {
           mostrarAlerta(datos.msg, "danger");
         }
