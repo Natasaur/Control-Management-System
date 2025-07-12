@@ -1,8 +1,19 @@
 const mongoose = require("mongoose");
 
-const DiasNoLaborablesSchema = new mongoose.Schema({
-  fecha: { type: String, required: true }, // ej. "10/06/2025"
-  motivo: String
+const diasNoLaborablesSchema = new mongoose.Schema({
+  fecha: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  motivo: {
+    type: String,
+    required: true
+  },
+  modalidad: {
+    type: String,
+    required: true
+  }
 });
 
-module.exports = mongoose.model("DiasNoLaborables", DiasNoLaborablesSchema);
+module.exports = mongoose.model("dias_no_laborables", diasNoLaborablesSchema);

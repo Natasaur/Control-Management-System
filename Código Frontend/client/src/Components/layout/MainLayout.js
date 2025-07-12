@@ -3,7 +3,7 @@ import { Container, Navbar, Nav, Button } from 'react-bootstrap';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
-export default function MainLayout() {
+export default function MainLayout({ setIsAuthenticated }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -14,6 +14,7 @@ export default function MainLayout() {
     Cookies.remove("nombre");
     Cookies.remove("apellido_paterno");
     Cookies.remove("apellido_materno");
+    setIsAuthenticated(false);
     navigate("/", { replace: true });
   };
 
@@ -49,6 +50,7 @@ export default function MainLayout() {
 
       <Container className="mt-4">
         <Outlet />
+        
       </Container>
     </>
   );
