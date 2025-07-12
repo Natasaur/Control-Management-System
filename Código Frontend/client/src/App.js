@@ -151,13 +151,13 @@ const App = () => {
     <BrowserRouter>
       <Routes>
       {/** PUBLIC ROUTES */}
-        <Route path="/" element={<Login setToken={ setToken } />} />
+        <Route path="/" element={<Login setToken={ setToken } setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/password" element={<Password />} />
         <Route path="/404" element={<NotFound />} />
 
         {/** PRIVATE ROUTES IN LAYOUT */}
         {isAuthenticated && (
-          <Route element={ <PrivateRoute> <MainLayout /> </PrivateRoute> }>
+          <Route element={ <PrivateRoute> <MainLayout setIsAuthenticated={setIsAuthenticated}/> </PrivateRoute> }>
             <Route index element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/Iniciousuario" element={<Iniciousuario />} />

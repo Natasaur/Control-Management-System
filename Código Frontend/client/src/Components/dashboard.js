@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Card, Spinner, Alert } from 'react-bootstrap';
 import { Bar, Pie, Line, Doughnut } from 'react-chartjs-2';
+import api from '../api/axios';
+//import axios from 'axios';
 
 import {
   Chart as ChartJS,
@@ -14,6 +16,7 @@ import {
   Legend,
   ArcElement
 } from 'chart.js';
+
 
 ChartJS.register(
   CategoryScale,
@@ -47,12 +50,29 @@ export default function Dashboard() {
       // setDatosBarras(res.data.barras);
 
       // Simulando datos de ejemplo:
+
+      const body = {
+        fechaInicio: "2025-06-01",
+        fechaFin: "2025-06-07"
+      };
+
+      const res = await api.post(
+        "/asistencia/buscar/porcentaje/plantel",
+        body
+      );
+
+      const datos = res.data.datos;
+
+    // Crear labels y datos para la gráfica de barras
+    const labels = datos.map(item => item.plantel);
+    const dataPorcentajes = datos.map(item => item.porcentajeAsistencia);
+
       setDatosBarras({
-        labels: ['Atizapán', 'Zona Rosa'],
+        labels,
         datasets: [
           {
-            label: 'Asistencias',
-            data: [120, 90],
+            label: '% Asistencias',
+            data: dataPorcentajes,
             backgroundColor: '#36A2EB'
           }
         ]

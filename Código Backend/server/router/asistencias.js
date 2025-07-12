@@ -32,7 +32,7 @@ api.post(
 api.post(
   "/asistencia/buscar/porcentaje/plantel",
   //[authUsuario],
-  [authAdmin],
+  //[authAdmin],
   asistenciasController.porcentajeAsistenciaPlantel
 );
 api.post(

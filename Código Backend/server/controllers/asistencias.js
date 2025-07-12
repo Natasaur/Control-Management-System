@@ -2,6 +2,10 @@ const Asistencia = require("../models/asistencias");
 const Usuario = require("../models/usuarios");
 const Fechas_asistencias = require("../models/fechas_asistencias");
 const Alumno = require("../models/alumnos");
+const Plantel = require("../models/plantel");
+const DiasNoLaborables = require("../models/dias_no_laborables");
+
+
 
 //CONSULTOR
 /*
@@ -143,12 +147,26 @@ async function porcentajeAsistenciaPlantel(req, res) {
   try {
     const { fechaInicio, fechaFin } = req.body;
 
+    if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ msg: "Faltan fechas en el body" });
+    }
+
+    const diasNoLaborables = await DiasNoLaborables.find({
+      modalidad: "Escolarizado"
+    });
+
+    const fechasExcluidas = diasNoLaborables.map(d => d.fecha);
+    const arrayFechas = generarFechas(fechaInicio, fechaFin);
+
     const fechas = await Fechas_asistencias.find({
-      fecha: { $gte: fechaInicio, $lte: fechaFin }
+      fecha: {
+        $in: arrayFechas,
+        $nin: fechasExcluidas
+      }
     });
 
     const fechasLargo = fechas.length;
-    const arrayFechas = fechas.map(f => f.fecha);
+    
 
     const alumnos = await Alumno.find();
     const planteles = await Plantel.find();
@@ -202,8 +220,8 @@ async function porcentajeAsistenciaPlantel(req, res) {
       datos: respuesta,
     });
   } catch (error) {
-    console.log(error);
-    res.status(400).json({ msg: "Error al obtener datos" });
+    console.log("ERROR EN PORCENTAJE ASISTENCIA PLANTEL:", error);
+    res.status(400).json({ msg: error.message });
   }
 }
 
@@ -1013,7 +1031,6 @@ async function saludar() {
 
 //-----     NUEVAS FUNCIONES     -------//
 const moment = require("moment");
-const DiasNoLaborables = require("../models/dias_no_laborables");
 
 async function resumenAsistenciasPorGrupo(req, res) {
   try {
@@ -1125,6 +1142,28 @@ async function alumnosConFaltas(req, res) {
     res.status(500).json({ error: "Error al obtener alumnos con faltas." });
   }
 }
+
+function generarFechas(fechaInicio, fechaFin) {
+  const fechas = [];
+
+  const [diaInicio, mesInicio, anioInicio] = fechaInicio.split('/');
+  const [diaFin, mesFin, anioFin] = fechaFin.split('/');
+
+  let current = new Date(`${anioInicio}-${mesInicio}-${diaInicio}`);
+  const end = new Date(`${anioFin}-${mesFin}-${diaFin}`);
+
+  while (current <= end) {
+    const day = String(current.getDate()).padStart(2, '0');
+    const month = String(current.getMonth() + 1).padStart(2, '0');
+    const year = current.getFullYear();
+
+    fechas.push(`${day}/${month}/${year}`);
+    current.setDate(current.getDate() + 1);
+  }
+
+  return fechas;
+}
+
 
 module.exports = {
   crearAsistenciaIndividual,

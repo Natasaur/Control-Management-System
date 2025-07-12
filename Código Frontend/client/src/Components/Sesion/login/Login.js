@@ -8,7 +8,7 @@ import backgroundImage from "../../../img/UTC-1.jpg";
 import { ENV } from "../../../utils/Constants";
 
 //const Login = ({ setToken, setRol }) => {
-const Login = ({ setToken }) => {
+const Login = ({ setToken, setIsAuthenticated }) => {
   const BASE_PATH = ENV.BASE_PATH;
   const inicioRoute = ENV.API_ROUTES.nvQNHOaD1pGaVnr6MEpaeRsYAxiH8kM4L0;
   const [mostrarpassword, setMostrarpassword] = useState(false);
@@ -74,7 +74,8 @@ const Login = ({ setToken }) => {
           // Actualizar estado en APP
           //setToken(datos.access);
 
-          //Redirigir siempre al dashboard
+          setIsAuthenticated(true);
+          // Redirigir siempre al dashboard
           navigate("/dashboard");
 
         } else {
