@@ -44,7 +44,7 @@ api.post(
 api.post(
   "/asistencia/buscar/porcentaje/carrera",
   //[authUsuario],
-  [authAdmin],
+  //[authAdmin],
   asistenciasController.porcentajeAsistenciaCarrera
 );
 api.post(
