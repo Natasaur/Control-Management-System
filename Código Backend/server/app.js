@@ -17,6 +17,8 @@ const fechasRoutes = require("./router/fechas_asistencias");
 const gruposRoutes = require("./router/grupos");
 const authRoutes = require("./router/auth");
 const alertasRoutes = require("./router/alertas");
+const plantelesRoutes = require("./router/planteles");
+const carreraRoutes = require("./router/carreras");
 
 // configure static folder
 // EJEMPLO app.use(express.static("uploads"));
@@ -32,6 +34,8 @@ app.use(`/API/${process.env.API_VERSION}`, fechasRoutes);
 app.use(`/API/${process.env.API_VERSION}`, gruposRoutes);
 app.use(`/API/${process.env.API_VERSION}`, authRoutes);
 app.use(`/API/${process.env.API_VERSION}`, alertasRoutes);
+app.use(`/API/${process.env.API_VERSION}`, plantelesRoutes);
+app.use(`/API/${process.env.API_VERSION}`, carreraRoutes);
 
 //const cron = require("node-cron");
 const { saludar } = require("./controllers/asistencias");

@@ -2,7 +2,8 @@ const Asistencia = require("../models/asistencias");
 const Usuario = require("../models/usuarios");
 const Fechas_asistencias = require("../models/fechas_asistencias");
 const Alumno = require("../models/alumnos");
-const Plantel = require("../models/plantel");
+const Plantel = require("../models/planteles");
+const Carrera = require("../models/carreras")
 const DiasNoLaborables = require("../models/dias_no_laborables");
 
 
@@ -145,7 +146,16 @@ async function obtenerAsistencia(req, res) {
 //A PARTIR DE LA POSICION 1 HASTA LA POSICION 14 DEL ARRAY SE ENCUENTRAN OBJETOS JSON DONDE CADA UNO CONTIENE ATRIBUTOS NECESARIOS PARA MOSTRAR EL PORCENTAJE EN LAS GRAFICAS
 async function porcentajeAsistenciaPlantel(req, res) {
   try {
-    const { fechaInicio, fechaFin } = req.body;
+    const { fechaInicio, fechaFin, plantel } = req.body;
+    let planteles = [];
+
+    if (plantel) {
+      // Traer solo un plantel
+      planteles = await Plantel.find({ clave: plantel });
+    } else {
+      // Traer todos
+      planteles = await Plantel.find();
+    }
 
     if (!fechaInicio || !fechaFin) {
       return res.status(400).json({ msg: "Faltan fechas en el body" });
@@ -169,7 +179,7 @@ async function porcentajeAsistenciaPlantel(req, res) {
     
 
     const alumnos = await Alumno.find();
-    const planteles = await Plantel.find();
+    //const planteles = await Plantel.find();
 
     // Agrupar alumnos por plantel
     const alumnosPorPlantel = {};
@@ -186,8 +196,8 @@ async function porcentajeAsistenciaPlantel(req, res) {
 
     const respuesta = [];
 
-    for (const plantel of planteles) {
-      const alumnosPlantel = alumnosPorPlantel[plantel.clave] || [];
+    for (const p of planteles) {
+      const alumnosPlantel = alumnosPorPlantel[p.clave] || [];
       const cantidadAlumnos = alumnosPlantel.length;
       const asistenciasMaximas = cantidadAlumnos * fechasLargo;
 
@@ -206,7 +216,7 @@ async function porcentajeAsistenciaPlantel(req, res) {
         : 0;
 
       respuesta.push({
-        plantel: plantel.nombre,
+        plantel: p.nombre,
         cantidadAlumnos,
         asistenciasMaximas,
         asistenciasRegistradas,
@@ -463,357 +473,71 @@ async function porcentajeAsistenciaCuatrimestre(req, res) {
 //FUNCION PARA OBTENER EL PORCENTAJE DE ASISTENCIA DE ACUERDO A LAS CARRERAS DE ACUERDO A UN PLANTEL EN ESPECIFICO
 async function porcentajeAsistenciaCarrera(req, res) {
   try {
-    const { plantel, semana } = req.body;
+    const { fechaInicio, fechaFin} = req.body;
 
-    //FECHAS DE ASISTENCIAS Y LARGO DE CANTIDAD DE ASISTENCIAS
-    const fechas = await Fechas_asistencias.find({ semana });
-    const fechasLargo = fechas.length;
-    const arrayFechas = [];
-
-    //PASAR EL JSON DE ASISTENCIAS A UN ARRAY
-    for (var a = 0; a < fechasLargo; a++) {
-      arrayFechas.push(fechas[a].fecha);
+    if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ msg: "Faltan fechas en el body" });
     }
 
-    //OBTENER LISTA DE ALUMNOS EXISTENTES
-    const alumnos = await Alumno.find();
+    const diasNoLaborables = await DiasNoLaborables.find({
+      modalidad: "Escolarizado"
+    });
 
-    //usando un substring guarda en una variable la carrera del alumno que esta en su grupo, antes crea un array con toda la lista de grupos y varias variables por todas las carreras
-    //para que de acuerdo al caso de la carrera a la que pertenezca se guarden ahi sus datos
-    const carreraINFO = [];
-    const carreraINAD = [];
-    const carreraADMI = [];
-    const carreraTURI = [];
-    const carreraDIGR = [];
-    const carreraARQU = [];
-    const carreraPEDA = [];
-    const carreraINSC = [];
-    const carreraDERE = [];
-    const carreraCOFI = [];
-    const carreraADME = [];
-    const carreraMERC = [];
-    const carreraCRIM = [];
-    const carreraCOIN = [];
-    const carreraADMP = [];
-    const carreraDOES = [];
-    const carreraADMN = [];
+    const fechasExcluidas = diasNoLaborables.map(d => d.fecha);
+    const arrayFechas = generarFechas(fechaInicio, fechaFin);
 
-    for (var i = 0; i < alumnos.length; i++) {
-      switch (alumnos[i].grupo[1]) {
-        case plantel:
-          let carrera = alumnos[i].grupo.substring(4, 8);
-          switch (carrera) {
-            case "INFO":
-              carreraINFO.push(alumnos[i].matricula);
-              break;
-            case "INAD":
-              carreraINAD.push(alumnos[i].matricula);
-              break;
-            case "ADMI":
-              carreraADMI.push(alumnos[i].matricula);
-              break;
-            case "TURI":
-              carreraTURI.push(alumnos[i].matricula);
-              break;
-            case "DIGR":
-              carreraDIGR.push(alumnos[i].matricula);
-              break;
-            case "ARQU":
-              carreraARQU.push(alumnos[i].matricula);
-              break;
-            case "PEDA":
-              carreraPEDA.push(alumnos[i].matricula);
-              break;
-            case "INSC":
-              carreraINSC.push(alumnos[i].matricula);
-              break;
-            case "DERE":
-              carreraDERE.push(alumnos[i].matricula);
-              break;
-            case "COFI":
-              carreraCOFI.push(alumnos[i].matricula);
-              break;
-            case "ADME":
-              carreraADME.push(alumnos[i].matricula);
-              break;
-            case "MERC":
-              carreraMERC.push(alumnos[i].matricula);
-              break;
-            case "CRIM":
-              carreraCRIM.push(alumnos[i].matricula);
-              break;
-            case "COIN":
-              carreraCOIN.push(alumnos[i].matricula);
-              break;
-            case "ADMP":
-              carreraADMP.push(alumnos[i].matricula);
-              break;
-            case "DOES":
-              carreraDOES.push(alumnos[i].matricula);
-              break;
-            case "ADMN":
-              carreraADMN.push(alumnos[i].matricula);
-              break;
-          }
+    // Fechas de asistencias
+    const fechas = await Fechas_asistencias.find({
+      fecha: {
+        $in: arrayFechas,
+        $nin: fechasExcluidas
+      }
+    });
+    const fechasLargo = fechas.length;
 
-          break;
+    // Traer carreras
+    const carreras = await Carrera.find();
+
+    // Obtener alumnos
+    let alumnos = await Alumno.find();
+
+    // Inicializar conteo de carreras
+    const conteoCarreras = {};
+    for (const carrera of carreras) {
+      conteoCarreras[carrera.clave] = 0;
+    }
+
+    // Contar alumnos por coincidencia de clave dentro del grupo
+    for (const alumno of alumnos) {
+      const grupos = Array.isArray(alumno.grupo) ? alumno.grupo : [alumno.grupo];
+      for (const carrera of carreras) {
+        if (alumno.grupo.includes(carrera.clave)) {
+          conteoCarreras[carrera.clave]++;
+          break; // si un alumno solo pertenece a una carrera
+        }
       }
     }
 
-    //CONSTANTE QUE ALMACENA EL NUMERO MAXIMO DE ASISTENCIAS POR CARRERA PARA COMPLETAR EL 100 POR CIENTO
-    const asistenciasMaximasINFO = carreraINFO.length * fechasLargo;
-    const asistenciasMaximasINAD = carreraINAD.length * fechasLargo;
-    const asistenciasMaximasADMI = carreraADMI.length * fechasLargo;
-    const asistenciasMaximasTURI = carreraTURI.length * fechasLargo;
-    const asistenciasMaximasDIGR = carreraDIGR.length * fechasLargo;
-    const asistenciasMaximasARQU = carreraARQU.length * fechasLargo;
-    const asistenciasMaximasPEDA = carreraPEDA.length * fechasLargo;
-    const asistenciasMaximasINSC = carreraINSC.length * fechasLargo;
-    const asistenciasMaximasDERE = carreraDERE.length * fechasLargo;
-    const asistenciasMaximasCOFI = carreraCOFI.length * fechasLargo;
-    const asistenciasMaximasADME = carreraADME.length * fechasLargo;
-    const asistenciasMaximasMERC = carreraMERC.length * fechasLargo;
-    const asistenciasMaximasCRIM = carreraCRIM.length * fechasLargo;
-    const asistenciasMaximasCOIN = carreraCOIN.length * fechasLargo;
-    const asistenciasMaximasADMP = carreraADMP.length * fechasLargo;
-    const asistenciasMaximasDOES = carreraDOES.length * fechasLargo;
-    const asistenciasMaximasADMN = carreraADMN.length * fechasLargo;
+    console.log('Carreras:', carreras);
+    console.log('Alumnos:', alumnos);
+    console.log('Conteo por carrera:', conteoCarreras);
 
-    //BUSQUEDA DE REGISTROS DE ASISTENCIA POR CARRERA
-    const asistenciasRegistradasINFO = await Asistencia.find({
-      matricula: { $in: carreraINFO },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasINAD = await Asistencia.find({
-      matricula: { $in: carreraINAD },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasADMI = await Asistencia.find({
-      matricula: { $in: carreraADMI },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasTURI = await Asistencia.find({
-      matricula: { $in: carreraTURI },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasDIGR = await Asistencia.find({
-      matricula: { $in: carreraDIGR },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasARQU = await Asistencia.find({
-      matricula: { $in: carreraARQU },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasPEDA = await Asistencia.find({
-      matricula: { $in: carreraPEDA },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasINSC = await Asistencia.find({
-      matricula: { $in: carreraINSC },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasDERE = await Asistencia.find({
-      matricula: { $in: carreraDERE },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasCOFI = await Asistencia.find({
-      matricula: { $in: carreraCOFI },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasADME = await Asistencia.find({
-      matricula: { $in: carreraADME },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasMERC = await Asistencia.find({
-      matricula: { $in: carreraMERC },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasCRIM = await Asistencia.find({
-      matricula: { $in: carreraCRIM },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasCOIN = await Asistencia.find({
-      matricula: { $in: carreraCOIN },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasADMP = await Asistencia.find({
-      matricula: { $in: carreraADMP },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasDOES = await Asistencia.find({
-      matricula: { $in: carreraDOES },
-      fecha: { $in: arrayFechas },
-    });
-    const asistenciasRegistradasADMN = await Asistencia.find({
-      matricula: { $in: carreraADMN },
-      fecha: { $in: arrayFechas },
-    });
 
-    //CALCULO DEL PORCENTAJE DE ASISTENCIA
-    const porcentajeAsistenciaINFO =
-      (asistenciasRegistradasINFO.length * 100) / asistenciasMaximasINFO;
-    const porcentajeAsistenciaINAD =
-      (asistenciasRegistradasINAD.length * 100) / asistenciasMaximasINAD;
-    const porcentajeAsistenciaADMI =
-      (asistenciasRegistradasADMI.length * 100) / asistenciasMaximasADMI;
-    const porcentajeAsistenciaTURI =
-      (asistenciasRegistradasTURI.length * 100) / asistenciasMaximasTURI;
-    const porcentajeAsistenciaDIGR =
-      (asistenciasRegistradasDIGR.length * 100) / asistenciasMaximasDIGR;
-    const porcentajeAsistenciaARQU =
-      (asistenciasRegistradasARQU.length * 100) / asistenciasMaximasARQU;
-    const porcentajeAsistenciaPEDA =
-      (asistenciasRegistradasPEDA.length * 100) / asistenciasMaximasPEDA;
-    const porcentajeAsistenciaINSC =
-      (asistenciasRegistradasINSC.length * 100) / asistenciasMaximasINSC;
-    const porcentajeAsistenciaDERE =
-      (asistenciasRegistradasDERE.length * 100) / asistenciasMaximasDERE;
-    const porcentajeAsistenciaCOFI =
-      (asistenciasRegistradasCOFI.length * 100) / asistenciasMaximasCOFI;
-    const porcentajeAsistenciaADME =
-      (asistenciasRegistradasADME.length * 100) / asistenciasMaximasADME;
-    const porcentajeAsistenciaMERC =
-      (asistenciasRegistradasMERC.length * 100) / asistenciasMaximasMERC;
-    const porcentajeAsistenciaCRIM =
-      (asistenciasRegistradasCRIM.length * 100) / asistenciasMaximasCRIM;
-    const porcentajeAsistenciaCOIN =
-      (asistenciasRegistradasCOIN.length * 100) / asistenciasMaximasCOIN;
-    const porcentajeAsistenciaADMP =
-      (asistenciasRegistradasADMP.length * 100) / asistenciasMaximasADMP;
-    const porcentajeAsistenciaDOES =
-      (asistenciasRegistradasDOES.length * 100) / asistenciasMaximasDOES;
-    const porcentajeAsistenciaADMN =
-      (asistenciasRegistradasADMN.length * 100) / asistenciasMaximasADMN;
+    // Preparar respuesta
+    const datos = carreras.map(carrera => ({
+      carrera: carrera.nombre,
+      clave: carrera.clave,
+      alumnos: conteoCarreras[carrera.clave] || 0
+    }));
 
-    const response = [
-      {
-        fechas: arrayFechas,
-        cantidadFechas: fechasLargo,
-      },
-      {
-        carrera: "INFORMATICA",
-        cantidadAlumnos: carreraINFO.length,
-        asistenciasMaximas: asistenciasMaximasINFO,
-        asistenciasRegistradas: asistenciasRegistradasINFO.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaINFO.toFixed(2)),
-      },
-      {
-        carrera: "INFORMATICA ADMINISTRATIVA",
-        cantidadAlumnos: carreraINAD.length,
-        asistenciasMaximas: asistenciasMaximasINAD,
-        asistenciasRegistradas: asistenciasRegistradasINAD.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaINAD.toFixed(2)),
-      },
-      {
-        carrera: "ADMINISTRACION",
-        cantidadAlumnos: carreraADMI.length,
-        asistenciasMaximas: asistenciasMaximasADMI,
-        asistenciasRegistradas: asistenciasRegistradasADMI.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaADMI.toFixed(2)),
-      },
-      {
-        carrera: "TURISMO",
-        cantidadAlumnos: carreraTURI.length,
-        asistenciasMaximas: asistenciasMaximasTURI,
-        asistenciasRegistradas: asistenciasRegistradasTURI.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaTURI.toFixed(2)),
-      },
-      {
-        carrera: "DISEÑO GRAFICO",
-        cantidadAlumnos: carreraDIGR.length,
-        asistenciasMaximas: asistenciasMaximasDIGR,
-        asistenciasRegistradas: asistenciasRegistradasDIGR.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaDIGR.toFixed(2)),
-      },
-      {
-        carrera: "ARQUITECTURA",
-        cantidadAlumnos: carreraARQU.length,
-        asistenciasMaximas: asistenciasMaximasARQU,
-        asistenciasRegistradas: asistenciasRegistradasARQU.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaARQU.toFixed(2)),
-      },
-      {
-        carrera: "PEDAGOGIA",
-        cantidadAlumnos: carreraPEDA.length,
-        asistenciasMaximas: asistenciasMaximasPEDA,
-        asistenciasRegistradas: asistenciasRegistradasPEDA.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaPEDA.toFixed(2)),
-      },
-      {
-        carrera: "INGENIERIA EN SISTEMAS COMPUTACIONALES",
-        cantidadAlumnos: carreraINSC.length,
-        asistenciasMaximas: asistenciasMaximasINSC,
-        asistenciasRegistradas: asistenciasRegistradasINSC.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaINSC.toFixed(2)),
-      },
-      {
-        carrera: "DERECHO",
-        cantidadAlumnos: carreraDERE.length,
-        asistenciasMaximas: asistenciasMaximasDERE,
-        asistenciasRegistradas: asistenciasRegistradasDERE.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaDERE.toFixed(2)),
-      },
-      {
-        carrera: "CONTADURIA Y FINANZAS",
-        cantidadAlumnos: carreraCOFI.length,
-        asistenciasMaximas: asistenciasMaximasCOFI,
-        asistenciasRegistradas: asistenciasRegistradasCOFI.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaCOFI.toFixed(2)),
-      },
-      {
-        carrera: "ADMINISTRACION DE EMRPESAS",
-        cantidadAlumnos: carreraADME.length,
-        asistenciasMaximas: asistenciasMaximasADME,
-        asistenciasRegistradas: asistenciasRegistradasADME.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaADME.toFixed(2)),
-      },
-      {
-        carrera: "MERCADOTECNIA",
-        cantidadAlumnos: carreraMERC.length,
-        asistenciasMaximas: asistenciasMaximasMERC,
-        asistenciasRegistradas: asistenciasRegistradasMERC.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaMERC.toFixed(2)),
-      },
-      {
-        carrera: "CRIMINALISTICA",
-        cantidadAlumnos: carreraCRIM.length,
-        asistenciasMaximas: asistenciasMaximasCRIM,
-        asistenciasRegistradas: asistenciasRegistradasCRIM.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaCRIM.toFixed(2)),
-      },
-      {
-        carrera: "COMERCIO INTERNACIONAL",
-        cantidadAlumnos: carreraCOIN.length,
-        asistenciasMaximas: asistenciasMaximasCOIN,
-        asistenciasRegistradas: asistenciasRegistradasCOIN.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaCOIN.toFixed(2)),
-      },
-      {
-        carrera: "ADMINISTRACION PUBLICA",
-        cantidadAlumnos: carreraADMP.length,
-        asistenciasMaximas: asistenciasMaximasADMP,
-        asistenciasRegistradas: asistenciasRegistradasADMP.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaADMP.toFixed(2)),
-      },
-      {
-        carrera: "DOCENCIA EN EDUCACION SUPERIOR",
-        cantidadAlumnos: carreraDOES.length,
-        asistenciasMaximas: asistenciasMaximasDOES,
-        asistenciasRegistradas: asistenciasRegistradasDOES.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaDOES.toFixed(2)),
-      },
-      {
-        carrera: "ADMINISTRACION Y NEGOCIOS",
-        cantidadAlumnos: carreraADMN.length,
-        asistenciasMaximas: asistenciasMaximasADMN,
-        asistenciasRegistradas: asistenciasRegistradasADMN.length,
-        porcentajeAsistencia: parseFloat(porcentajeAsistenciaADMN.toFixed(2)),
-      },
-    ];
-
-    res.status(200).send(response);
+    res.status(200).json({
+      fechas: arrayFechas,
+      cantidadFechas: fechasLargo,
+      datos
+    });
   } catch (error) {
-    res.status(400).send({ msg: "Error al obtener los datos" });
+    console.log(error);
+    res.status(400).json({ msg: "Error al obtener los datos" });
     throw error;
   }
 }
