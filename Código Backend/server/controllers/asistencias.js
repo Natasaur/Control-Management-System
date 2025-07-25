@@ -5,6 +5,7 @@ const Alumno = require("../models/alumnos");
 const Plantel = require("../models/planteles");
 const Carrera = require("../models/carreras")
 const DiasNoLaborables = require("../models/dias_no_laborables");
+//const moment = require("moment"); // o Date si no quieres librerías
 
 
 
@@ -747,6 +748,71 @@ async function porcentajeAsistenciaAlumno(req, res) {
   }
 }
 
+async function porcentajeAsistenciaDiario(req, res) {
+  try {
+    const { fechaInicio, fechaFin, plantel, carrera, grupo } = req.body;
+
+    if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ msg: "Faltan fechas en el body" });
+    }
+
+    const arrayFechas = generarFechas(fechaInicio, fechaFin);
+
+    // --- Armar el filtro correctamente antes de consultar ---
+    let alumnosQuery = {};
+
+    if (grupo) {
+      alumnosQuery["grupo"] = grupo; // Si hay grupo exacto, se usa directamente
+    } else {
+      const grupoFiltro = [];
+      if (plantel) grupoFiltro.push(`^${plantel}`);
+      if (carrera) grupoFiltro.push(`${carrera}$`);
+      if (grupoFiltro.length > 0) {
+        alumnosQuery["grupo"] = new RegExp(grupoFiltro.join(".*"));
+      }
+    }
+
+    const alumnos = await Alumno.find(alumnosQuery);
+
+    const datos = [];
+
+    for (const fecha of arrayFechas) {
+      const totalAlumnos = alumnos.length;
+
+      let asistenciasRegistradas = 0;
+      if (totalAlumnos > 0) {
+        asistenciasRegistradas = await Asistencia.countDocuments({
+          matricula: { $in: alumnos.map(a => a.matricula) },
+          fecha: fecha
+        });
+      }
+
+      const porcentaje = totalAlumnos > 0
+        ? parseFloat(((asistenciasRegistradas * 100) / totalAlumnos).toFixed(2))
+        : 0;
+
+      const diaSemana = moment(fecha, "DD/MM/YYYY").format("dddd");
+
+      datos.push({
+        fecha,
+        diaSemana,
+        asistenciasRegistradas,
+        alumnosEsperados: totalAlumnos,
+        porcentajeAsistencia: porcentaje
+      });
+    }
+
+    res.status(200).json({
+      fechas: arrayFechas,
+      datos
+    });
+
+  } catch (error) {
+    console.log("ERROR EN porcentajeAsistenciaDiario:", error);
+    res.status(400).json({ msg: error.message });
+  }
+}
+
 async function saludar() {
   console.log("Hola buenas como estan");
 }
@@ -900,6 +966,7 @@ module.exports = {
   porcentajeAsistenciaTurno,
   porcentajeAsistenciaGrupo,
   porcentajeAsistenciaAlumno,
+  porcentajeAsistenciaDiario,
   saludar,
   resumenAsistenciasPorGrupo,
   alumnosConFaltas,

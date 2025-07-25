@@ -5,6 +5,9 @@ import api from '../api/axios';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Cookies from 'js-cookie';
+import moment from "moment";
+import "moment/locale/es";
+
 
 import {
   Chart as ChartJS,
@@ -16,7 +19,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
 } from 'chart.js';
 
 ChartJS.register(
@@ -46,12 +49,14 @@ export default function Dashboard() {
   // Filtros
   const [plantelSeleccionado, setPlantelSeleccionado] = useState("");
   const [carreraSeleccionada, setCarreraSeleccionada] = useState("");
+  const [grupoSeleccionado, setGrupoSeleccionado] = useState("");
   const [fechaInicio, setFechaInicio] = useState(null);
   const [fechaFin, setFechaFin] = useState(null);
 
   // Catálogos
   const [planteles, setPlanteles] = useState([]);
   const [carrera, setCarreras] = useState([]);
+  const [grupos, setGrupos] = useState([]);
 
   const chartColors = [
     "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40",
@@ -61,36 +66,49 @@ export default function Dashboard() {
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
   // █ CARGA DE CATÁLOGOS
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  const fetchPlanteles = async () => {
+    try {
+      const token = Cookies.get("token");
+      const res = await api.get("/plantel/obtenerPlanteles", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPlanteles(res.data);
+    } catch (error) {
+      console.error(error);
+      setError("Error al cargar planteles");
+    }
+  };
+
+  const fetchCarreras = async () => {
+    try {
+      const token = Cookies.get("token");
+      const res = await api.get("/carrera/obtenerCarreras", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCarreras(res.data);
+    } catch (error) {
+      console.error(error);
+      setError("Error al cargar carreras");
+    }
+  };
+
+  const fetchGrupos = async () => {
+    try {
+      const token = Cookies.get("token");
+      const res = await api.post("/grupo/buscar/activos", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setGrupos(res.data);
+    } catch (error) {
+      console.error(error);
+      setError("Error al cargar grupos");
+    }
+  };
 
   useEffect(() => {
-    const fetchPlanteles = async () => {
-      try {
-        const token = Cookies.get("token");
-        const res = await api.get("/plantel/obtenerPlanteles", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setPlanteles(res.data);
-      } catch (error) {
-        console.error(error);
-        setError("Error al cargar planteles");
-      }
-    };
-
-    const fetchCarreras = async () => {
-      try {
-        const token = Cookies.get("token");
-        const res = await api.get("/carrera/obtenerCarreras", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setCarreras(res.data);
-      } catch (error) {
-        console.error(error);
-        setError("Error al cargar carreras");
-      }
-    };
-
     fetchPlanteles();
     fetchCarreras();
+    fetchGrupos();
   }, []);
 
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -169,15 +187,53 @@ export default function Dashboard() {
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
   const cargarDatosLine = async (body, token) => {
-    // FUTURO: aquí llamarás a tu nuevo endpoint
-    // de evolución de asistencias para la línea.
-    // Por ahora datos dummy:
+    const res = await api.post("/alumno/contarAsistenciaPorDia", body, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log("body:", body);
+    console.log("res:", res.data);
+
+    // Diccionario: { lunes: [80, 85], martes: [60, 75], etc. }
+    const agrupadoPorDia = {
+      lunes: 0,
+      martes: 0,
+      miércoles: 0,
+      jueves: 0,
+      viernes: 0,
+      sábado: 0,
+      domingo: 0
+    };
+
+    if (res.data && Array.isArray(res.data.datos)) {
+      res.data.datos.forEach(d => {
+        const dia = moment(d.fecha, "DD/MM/YYYY").format("dddd"); // ej: "lunes"
+        if (agrupadoPorDia[dia] !== undefined) {
+          agrupadoPorDia[dia] += d.asistencias;
+        }
+      });
+    }
+
+    // Días en orden (opcionalmente con mayúscula inicial)
+    const diasSemanaOrdenados = [
+      "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"
+    ];
+
+    const labels = [];
+    const data = [];
+
+    diasSemanaOrdenados.forEach(dia => {
+      labels.push(dia.charAt(0).toUpperCase() + dia.slice(1)); // "Lunes"
+      data.push(agrupadoPorDia[dia]);
+    });
+
     setDatosLine({
-      labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+      labels,
       datasets: [
         {
-          label: 'Asistencias',
-          data: [30, 50, 40, 70, 60],
+          label: 'Asistencias por Día',
+          data: data,
           borderColor: chartColors[0],
           backgroundColor: chartColors[0],
           fill: false
@@ -279,7 +335,7 @@ export default function Dashboard() {
                   onChange={e => setPlantelSeleccionado(e.target.value)}
                 >
                   <option value="">Todos</option>
-                  {planteles.map(p => (
+                  {planteles.map((p) => (
                     <option key={p._id} value={p.clave}>
                       {p.nombre}
                     </option>
@@ -293,9 +349,23 @@ export default function Dashboard() {
                   onChange={e => setCarreraSeleccionada(e.target.value)}
                 >
                   <option value="">Todos</option>
-                  {carrera.map(p => (
-                    <option key={p._id} value={p.clave}>
-                      {p.nombre}
+                  {carrera.map((c) => (
+                    <option key={c._id} value={c.clave}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Grupo</Form.Label>
+                <Form.Select
+                  value={grupoSeleccionado}
+                  onChange={e => setGrupoSeleccionado(e.target.value)}
+                >
+                  <option value="">Todos</option>
+                  {grupos.map((g) => (
+                    <option key={g._id}>
+                      {g.grupo}
                     </option>
                   ))}
                 </Form.Select>
@@ -337,8 +407,8 @@ export default function Dashboard() {
                   </Card>
                 </Col>
                 <Col md={6}>
-                  <Card>
-                    <Card.Header>Evolución de Asistencias</Card.Header>
+                  <Card className='mb-3'>
+                    <Card.Header>Promedio de Asistencias por Día</Card.Header>
                     <Card.Body>
                       <Line data={datosLine} options={{ responsive: true }} />
                     </Card.Body>

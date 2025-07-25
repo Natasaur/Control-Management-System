@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
-//import { useNavigate } from 'react-router-dom';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
 import MainLayout from './Components/layout/MainLayout';
 import Dashboard from './Components/dashboard';
-import Consultor from './Components/Consultor/Consultor';
-import Iniciousuario from './Components/Administrador/inicio/InicioA';
-import Rector from './Components/Rector/ComponentesRector/Rector';
 import Login from './Components/Sesion/login/Login';
-import Inicio from './Components/Administrador/inicio/Inicio';
-//import InicioA from './Components/Administrador/inicio/InicioA';
-import Parametro from './Components/Administrador/parametros/Parametros';
-import ParametroA from './Components/Administrador/parametros/ParametrosA';
-import Selecionar from './Components/Consultor/Selecccionar';
 import Password from './Components/Sesion/password/Password';
-import CambioA from './Components/Todos/RestablecerDatosA';
-import CambioB from './Components/Todos/RestablecerDatos';
+
+import CrearUnicoAlumno from "./Components/AlumnosYGrupos/CrearUnicoAlumno";
+import { TablaAlumnos } from "./Components/AlumnosYGrupos/TablaAlumnos";
+import AsistenciaManual from "./Components/Asistencias/AsistenciaManual";
+import VisualizarA from "./Components/Asistencias/VisualizarA";
+import CrearUnicoU from "./Components/Usuarios/CrearUnicoU";
+import Tabla from "./Components/Usuarios/Tabla";
+import Alertas from "./Components/Alertas/Alertas";
+import Parametros from "./Components/Parametros/Parametros";
+
+
 import Cookies from 'js-cookie';
 
 
@@ -67,7 +68,8 @@ const App = () => {
     checkAuthentication();
   }, []);
 
-  /*const navigateToRolePage = (userRole) => {
+  /*
+  const navigateToRolePage = (userRole) => {
     navigate('/dashboard');
     switch (userRole) {
       case 'A':
@@ -85,7 +87,8 @@ const App = () => {
       default:
         navigate('/404', { replace: true });
     }
-  };*/
+  };
+  */
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -150,30 +153,39 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-      {/** PUBLIC ROUTES */}
-        <Route path="/" element={<Login setToken={ setToken } setIsAuthenticated={setIsAuthenticated} />} />
+        {/* Rutas públicas */}
+        <Route path="/" element={<Login setToken={setToken} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/password" element={<Password />} />
         <Route path="/404" element={<NotFound />} />
 
-        {/** PRIVATE ROUTES IN LAYOUT */}
+        {/* Rutas privadas */}
         {isAuthenticated && (
-          <Route element={ <PrivateRoute> <MainLayout setIsAuthenticated={setIsAuthenticated}/> </PrivateRoute> }>
+          <Route element={<PrivateRoute><MainLayout setIsAuthenticated={setIsAuthenticated} /></PrivateRoute>}>
             <Route index element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/Iniciousuario" element={<Iniciousuario />} />
-            <Route path="/Inicio-usuario" element={<Inicio />} />
-            <Route path="/Parametros" element={<ParametroA />} />
-            <Route path="/Parametro" element={<Parametro />} />
-            <Route path="/Rector" element={<Rector />} />
-            <Route path="/Consultor" element={<Consultor />} />
-            <Route path="/seleccionar" element={<Selecionar />} />
-            <Route path="/cambioA" element={<CambioA />} />
-            <Route path="/cambioB" element={<CambioB />} />
+
+            {/* Asistencias */}
+            <Route path="/asistencias/manual" element={<AsistenciaManual />} />
+            <Route path="/asistencias/visualizar" element={<VisualizarA />} />
+
+            {/* Alumnos y grupos */}
+            <Route path="/alumnos/crear" element={<CrearUnicoAlumno />} />
+            <Route path="/alumnos/tabla" element={<TablaAlumnos />} />
+
+            {/* Usuarios */}
+            <Route path="/usuarios/crear" element={<CrearUnicoU />} />
+            <Route path="/usuarios/tabla" element={<Tabla />} />
+
+            {/* Alertas */}
+            <Route path="/alertas" element={<Alertas />} />
+
+            {/* Parámetros */}
+            <Route path="/parametros" element={<Parametros />} />
           </Route>
         )}
 
-        {/** CATCH ALL */}
-        <Route path='*' element={<NotFound />} />
+        {/* Catch all */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

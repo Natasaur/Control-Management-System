@@ -32,7 +32,7 @@ api.post(
 api.post(
   "/asistencia/buscar/porcentaje/plantel",
   //[authUsuario],
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.porcentajeAsistenciaPlantel
 );
 api.post(
@@ -44,7 +44,7 @@ api.post(
 api.post(
   "/asistencia/buscar/porcentaje/carrera",
   //[authUsuario],
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.porcentajeAsistenciaCarrera
 );
 api.post(
@@ -56,7 +56,7 @@ api.post(
 api.post(
   "/asistencia/buscar/porcentaje/grupo",
   //[authUsuario],
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.porcentajeAsistenciaGrupo
 );
 api.post(
@@ -68,14 +68,19 @@ api.post(
 
 api.post(
   "/asistencia/buscar/resumen/grupo",
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.resumenAsistenciasPorGrupo
 );
 
 api.post(
   "/asistencia/buscar/alumnos/con-faltas",
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.alumnosConFaltas
+);
+
+api.post("/asistencia/buscar/porcentaje/diario",
+  //[authAdmin],
+  asistenciasController.porcentajeAsistenciaDiario
 );
 
 

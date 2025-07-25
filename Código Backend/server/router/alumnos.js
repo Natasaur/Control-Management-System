@@ -1,46 +1,53 @@
 const express = require("express");
 const alumnosController = require("../controllers/alumnos");
-/*const {
-  authAdminAP,
-  authAdminConsultorUsuario,
-} = require("../middleware/auth");*/
 const { authAdmin } = require("../middleware/auth");
+const multer = require("multer");
+
+const storage = multer.memoryStorage(); // para no guardar en disco
+const upload = multer({ storage });
 
 const api = express.Router();
 
 api.post(
   "/alumno/crear/individual",
-  //[authAdminAP],
+  upload.single("imagen"),
   [authAdmin],
   alumnosController.crearAlumnoIndividual
 );
 api.post(
   "/alumno/crear/lista",
-  //[authAdminAP],
   [authAdmin],
   alumnosController.crearListaAlumnos
 );
-api.delete("/alumno/eliminar", 
-  //[authAdminAP], 
+api.delete(
+  "/alumno/eliminar/:matricula",
   [authAdmin],
-  alumnosController.borrarAlumno);
+  alumnosController.borrarAlumno
+);
 api.patch(
   "/alumno/actualizar",
-  //[authAdminAP],
   [authAdmin],
   alumnosController.actualizarAlumno
 );
 api.get(
   "/alumno/todos",
-  //[authAdminConsultorUsuario],
   [authAdmin],
   alumnosController.obtenerAlumnos
 );
 api.get(
-  "/alumno/matricula",
-  //[authAdminAP],
+  "/alumno/:matricula",
   [authAdmin],
   alumnosController.obtenerUnicoAlumno
+);
+api.post(
+  "/alumno/contarAsistenciaPorPlantel",
+  //[authAdmin],
+  alumnosController.contarAlumnosPorPlantel
+);
+api.post(
+  "/alumno/contarAsistenciaPorDia",
+  //[authAdmin],
+  alumnosController.contarAsistenciaPorDia
 );
 
 module.exports = api;

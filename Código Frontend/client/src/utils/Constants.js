@@ -44,5 +44,6 @@ export const ENV = {
         rP2cqUJM5x56b5bbkrOiyxbN6woiXAOAS: "/alumno/todos",
         fDxXEaGSGUfF0xIl4ybxMk2uS9PwtzVdTN4tP7JX8oLBnOeaOUA: "/alumno/matricula",
         wgJgf1yyn1D3yYNQ0Z802IAdy517MosAP: "/alertas/plantel",
+        obtenerEncoding: "/api/encoding/",
     }
 }

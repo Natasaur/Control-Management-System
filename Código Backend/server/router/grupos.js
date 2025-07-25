@@ -33,7 +33,7 @@ api.get("/grupo/buscar",
   gruposController.obtenerGrupos);
 api.post("/grupo/buscar/activos", 
   //[authConsultor], 
-  [authAdmin],
+  //[authAdmin],
   gruposController.gruposActivos);
 api.patch("/grupo/editar", 
   //[authAdminAP], 

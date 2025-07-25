@@ -15,6 +15,10 @@ const alumnosSchema = new mongoose.Schema({
 		type: String,
 	},
 	asistencias: [],
+	encoding: {
+		type: [Number], // o Array si no usas Mongoose estrictamente
+		required: true
+	},
 });
 
 module.exports = mongoose.model("alumnos", alumnosSchema);
