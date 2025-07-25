@@ -1,7 +1,11 @@
 const Alumno = require("../models/alumnos");
+const Plantel = require("../models/planteles");
+const Asistencia = require("../models/asistencias");
+const moment = require("moment");
+const axios = require("axios");
+const FormData = require("form-data");
 
-//ADMINISTRADOR
-//FUNCION PARA CARGAR UN SOLO ALUMNO, USO SUGERIDO EN UN FORMULARIO
+// ADMINISTRADOR - Crear alumno individual
 async function crearAlumnoIndividual(req, res) {
   const {
     matricula,
@@ -13,70 +17,83 @@ async function crearAlumnoIndividual(req, res) {
     contacto,
   } = req.body;
 
-  if (!matricula) res.status(400).send({ msg: "Matricula es requerido" });
-  if (!nombre) res.status(400).send({ msg: "Nombre es requerido" });
-  if (!grupo) res.status(400).send({ msg: "Grupo es requerido" });
-  if (!ciclo_escolar)
-    res.status(400).send({ msg: "Ciclo escolar es requerido" });
-  if (!contacto) res.status(400).send({ msg: "Contacto es requerido" });
+  if (!matricula) return res.status(400).send({ msg: "Matricula es requerida" });
+  if (!nombre) return res.status(400).send({ msg: "Nombre es requerido" });
+  if (!grupo) return res.status(400).send({ msg: "Grupo es requerido" });
+  if (!ciclo_escolar) return res.status(400).send({ msg: "Ciclo escolar es requerido" });
+  if (!contacto) return res.status(400).send({ msg: "Contacto es requerido" });
 
-  const alumno = new Alumno({
-    matricula,
-    nombre,
-    apellido_paterno,
-    apellido_materno,
-    grupo,
-    ciclo_escolar,
-    contacto,
-  });
+  if (!req.file) {
+    return res.status(400).send({ msg: "Imagen es requerida"});
+  }
 
-  await alumno.save((error, userStorage) => {
-    if (error) {
-      res.status(400).send({ msg: "Error al crear el usuario" });
-      console.log(error);
-    } else {
-      res.status(200).send(userStorage);
-    }
-  });
+  try {
+    const formData = new FormData();
+    formData.append("imagen",req.file.buffer, {
+      filename: req.file.originalname,
+      constentType: req.file.mimetype,
+    });
+
+    const djangoResponse = await axios.post("http://127.0.0.1:8000/api/encoding/", formData, {
+      headers: formData.getHeaders(),
+    });
+
+    const encoding = djangoResponse.data.encoding;
+
+    const alumno = new Alumno({
+      matricula,
+      nombre,
+      apellido_paterno,
+      apellido_materno,
+      grupo,
+      ciclo_escolar,
+      contacto,
+      encoding,
+    });
+
+    const userStorage = await alumno.save();
+    res.status(201).send(userStorage);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ msg: "Error al crear el alumno" });
+  }
 }
 
-//ADMINISTRADOR
-//FUNCION PARA CARGAR UNA LISTA DE ALUMNOS ENVIANDO UN ARRAY CON LOS OBJETOS JSON DENTRO
+// ADMINISTRADOR - Crear lista de alumnos
 async function crearListaAlumnos(req, res) {
   const alumnosArray = req.body;
 
   try {
     const alumnosCreados = await Alumno.insertMany(alumnosArray);
-
-    res
-      .status(200)
-      .send({ msg: "Exito al cargar la lista de alumnos ", alumnosCreados });
+    res.status(201).send({
+      msg: "Éxito al cargar la lista de alumnos",
+      alumnosCreados,
+    });
   } catch (error) {
-    res.status(400).send({ msg: "Error al cargar la lista de alumnos" });
-    throw error;
+    console.error(error);
+    res.status(500).send({ msg: "Error al cargar la lista de alumnos" });
   }
 }
 
-//ADMINISTRADOR
-//FUNCION PARA ELIMINAR UN ALUMNO ENVIANDO SU MATRICULA COMO ARGUMENTO
+// ADMINISTRADOR - Eliminar alumno
 async function borrarAlumno(req, res) {
-  const { matricula } = req.body;
+  const { matricula } = req.params;
 
   try {
     const alumnoEliminado = await Alumno.findOneAndDelete({ matricula });
 
     if (!alumnoEliminado) {
-      res.status(400).send({ msg: "Error al eliminar alumno" });
+      res.status(404).send({ msg: "Alumno no encontrado" });
     } else {
-      res.status(200).send({ msg: "Alumno eliminado" });
+      res.status(200).send({ msg: "Alumno eliminado correctamente" });
     }
   } catch (error) {
-    throw error;
+    console.error(error);
+    res.status(500).send({ msg: "Error al eliminar alumno" });
   }
 }
 
-//ADMINISTRADOR
-//FUNCION PARA ACTUALIZAR LOS DATOS DEL ALUMNO,LA MATRICULA TAMBIEN SE PUEDE ACTUALIZAR
+// ADMINISTRADOR - Actualizar alumno
 async function actualizarAlumno(req, res) {
   const {
     matricula,
@@ -106,44 +123,119 @@ async function actualizarAlumno(req, res) {
     );
 
     if (!alumnoActualizado) {
-      res.status(400).send({ msg: "Error al actualizar datos del alumno" });
+      res.status(404).send({ msg: "Alumno no encontrado" });
     } else {
       res.status(200).send(alumnoActualizado);
     }
   } catch (error) {
-    throw error;
+    console.error(error);
+    res.status(500).send({ msg: "Error al actualizar datos del alumno" });
   }
 }
 
-//ADMINISTRADOR
-//FUNCION PARA OBTENER ABSOLUTAMENTE TODOS LOS ALUMNOS
+// ADMINISTRADOR - Obtener todos los alumnos
 async function obtenerAlumnos(req, res) {
-  const response = await Alumno.find();
+  try {
+    const alumnos = await Alumno.find();
 
-  if (!response) {
-    res.status(400).send({ msg: "Error al obtener los alumnos" });
-  } else {
-    res.status(200).send(response);
+    res.status(200).send(alumnos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ msg: "Error al obtener los alumnos" });
   }
 }
 
-//ADMINISTRADOR
-//FUNCION PARA OBTENER LOS DATOS DE UN SOLO ALUMNO PASANDO COMO ARGUMENTO SU MATRICULA
+// ADMINISTRADOR - Obtener un solo alumno por matrícula
 async function obtenerUnicoAlumno(req, res) {
-  const { matricula } = req.body;
+  const { matricula } = req.params;
 
-  const response = await Alumno.find({ matricula });
+  try {
+    const alumno = await Alumno.findOne({ matricula });
 
-  if (!response) {
-    res.status(400).send({ msg: "Error al obtener los datos del alumno" });
-  } else {
-    res.status(200).send(response);
+    if (!alumno) {
+      return res.status(404).send({ msg: "Alumno no encontrado" });
+    }
+
+    res.status(200).send(alumno);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ msg: "Error al obtener los datos del alumno" });
   }
 }
 
-//USUARIOS: RECTOR
-//TODO FUNCION PARA OBTENER LOS ALUMNOS CON PROBABILIDAD DE BAJA PARA LOS USUARIOS: RECTOR
-//OPCION: POR CADA SEMANA SE EVALUE Y MUESTRE A AQUELLOS ALUMNOS QUE TENGAN AL MENOS DOS INASISTENCIAS, ESO SERIA CONSIDERADO UNA ALERTA
+// ADMINISTRADOR - Contar alumnos por plantel
+async function contarAlumnosPorPlantel(req, res) {
+  try {
+    const { plantel } = req.query;
+
+    let planteles = [];
+
+    if (plantel) {
+      planteles = await Plantel.find({ clave: plantel });
+    } else {
+      planteles = await Plantel.find();
+    }
+
+    const alumnosPorPlantel = {};
+    for (const p of planteles) {
+      alumnosPorPlantel[p.clave] = {
+        plantel: p.nombre,
+        cantidadAlumnos: 0,
+        alumnos: [],
+      };
+    }
+
+    const alumnos = await Alumno.find();
+
+    for (const alumno of alumnos) {
+      const letraPlantel = alumno.grupo[1];
+      if (alumnosPorPlantel[letraPlantel]) {
+        alumnosPorPlantel[letraPlantel].cantidadAlumnos++;
+        alumnosPorPlantel[letraPlantel].alumnos.push({
+          matricula: alumno.matricula,
+          grupo: alumno.grupo,
+          nombre: alumno.nombre,
+        });
+      }
+    }
+
+    const respuesta = Object.values(alumnosPorPlantel);
+
+    res.status(200).json(respuesta);
+  } catch (error) {
+    console.error("Error al contar alumnos por plantel:", error);
+    res.status(500).json({ msg: "Error al contar alumnos por plantel" });
+  }
+}
+
+async function contarAsistenciaPorDia(req, res) {
+  const { fechaInicio, fechaFin, plantel, grupo } = req.body;
+
+  const fechaInicioDate = moment(fechaInicio, "DD/MM/YYYY").format("DD/MM/YYYY");
+  const fechaFinDate = moment(fechaFin, "DD/MM/YYYY").format("DD/MM/YYYY");
+
+  const asistencias = await Asistencia.find({
+    fecha: { $gte: fechaInicioDate, $lte: fechaFinDate },
+    ...(plantel ? { plantel } : {}),
+    ...(grupo ? { grupo } : {}),
+  });
+
+  // Agrupar por fecha
+  const agrupadas = {};
+
+  for (const a of asistencias) {
+    const fecha = moment(a.fecha).format("DD/MM/YYYY");
+    if (!agrupadas[fecha]) agrupadas[fecha] = 0;
+    agrupadas[fecha]++;
+  }
+
+  const datos = Object.entries(agrupadas).map(([fecha, asistencias]) => ({
+    fecha,
+    asistencias
+  }));
+
+  res.json({ datos });
+}
 
 module.exports = {
   crearAlumnoIndividual,
@@ -152,4 +244,6 @@ module.exports = {
   borrarAlumno,
   obtenerAlumnos,
   obtenerUnicoAlumno,
+  contarAlumnosPorPlantel,
+  contarAsistenciaPorDia,
 };

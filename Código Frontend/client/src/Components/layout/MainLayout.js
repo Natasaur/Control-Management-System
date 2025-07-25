@@ -28,17 +28,29 @@ export default function MainLayout({ setIsAuthenticated }) {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
-              <Nav.Link as={Link} to="/dashboard">
-                Inicio
+              <Nav.Link as={Link} to="/asistencias/manual" className="text-white text-decoration-none">
+                Registrar Asistencia Manual
               </Nav.Link>
-              <Nav.Link as={Link} to="/Consultor">
-                Consultor
+              <Nav.Link as={Link} to="/asistencias/visualizar" className="text-white text-decoration-none">
+                Visualizar Asistencias
               </Nav.Link>
-              <Nav.Link as={Link} to="/Iniciousuario">
-                Administrador
+              <Nav.Link as={Link} to="/alumnos/crear" className="text-white text-decoration-none">
+                Registrar Alumno
               </Nav.Link>
-              <Nav.Link as={Link} to="/Rector">
-                Rector
+              <Nav.Link as={Link} to="/alumnos/tabla" className="text-white text-decoration-none">
+                Visualizar Alumnos
+              </Nav.Link>
+              <Nav.Link as={Link} to="/usuarios/crear" className="text-white text-decoration-none">
+                Registrar Usuario
+              </Nav.Link>
+              <Nav.Link as={Link} to="/usuarios/tabla" className="text-white text-decoration-none">
+                Visualizar Usuarios
+              </Nav.Link>
+              <Nav.Link as={Link} to="/alertas" className="text-white text-decoration-none">
+                Exportar Alertas
+              </Nav.Link>
+              <Nav.Link as={Link} to="/parametros" className="text-white text-decoration-none">
+                Fechas Inhábiles
               </Nav.Link>
             </Nav>
             <Button variant="outline-danger" onClick={handleLogout}>

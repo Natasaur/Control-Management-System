@@ -1,4 +1,4 @@
-const Grupos = require("../models/grupos");
+const Grupo = require("../models/grupos");
 
 //ADMINISTRADOR
 //FUNCION PARA CARGAR UN GRUPO DE MANERA INIDIVUAL, USO SUGERIDO EN UN FORMULARIO
@@ -125,23 +125,22 @@ async function obtenerGrupos(req, res) {
 async function gruposActivos(req, res) {
   const { plantel } = req.body;
 
-  const gruposActivos = await Grupos.find({ disponible: true });
-  let grupos = [];
+  // Siempre filtra por disponible
+  const filtro = { disponible: true };
 
-  gruposActivos.forEach((grupoActivo) => {
-    let plantelGrupo = grupoActivo.grupo.charAt(1);
+  // Si se envía plantel y NO es "TODOS", filtramos por plantel
+  if (plantel && plantel !== "TODOS") {
+    filtro.plantel = plantel;
+  }
 
-    if (plantelGrupo === plantel) {
-      grupos.push(grupoActivo);
-    }
-  });
+  const grupos = await Grupo.find(filtro);
 
   if (grupos.length === 0) {
-    res.status(400).send({
+    return res.status(400).send({
       msg: "Error, no se encontraron grupos disponibles de acuerdo a la zona",
     });
   } else {
-    res.status(200).send(grupos);
+    return res.status(200).send(grupos);
   }
 }
 
