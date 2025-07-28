@@ -8,10 +8,12 @@ import Password from './Components/Sesion/password/Password';
 
 import CrearUnicoAlumno from "./Components/AlumnosYGrupos/CrearUnicoAlumno";
 import { TablaAlumnos } from "./Components/AlumnosYGrupos/TablaAlumnos";
+import { TablaVA } from './Components/AlumnosYGrupos/TablaVA'
 import AsistenciaManual from "./Components/Asistencias/AsistenciaManual";
 import VisualizarA from "./Components/Asistencias/VisualizarA";
 import CrearUnicoU from "./Components/Usuarios/CrearUnicoU";
 import Tabla from "./Components/Usuarios/Tabla";
+import TablaV from "./Components/Usuarios/TablaV";
 import Alertas from "./Components/Alertas/Alertas";
 import Parametros from "./Components/Parametros/Parametros";
 
@@ -171,10 +173,12 @@ const App = () => {
             {/* Alumnos y grupos */}
             <Route path="/alumnos/crear" element={<CrearUnicoAlumno />} />
             <Route path="/alumnos/tabla" element={<TablaAlumnos />} />
+            <Route path="/alumnos/visualizar" element={<TablaVA />} />
 
             {/* Usuarios */}
             <Route path="/usuarios/crear" element={<CrearUnicoU />} />
             <Route path="/usuarios/tabla" element={<Tabla />} />
+            <Route path="/usuarios/visualizar" element={<TablaV />} />
 
             {/* Alertas */}
             <Route path="/alertas" element={<Alertas />} />

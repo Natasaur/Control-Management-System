@@ -7,7 +7,7 @@ export default function useCrearUSFuctions() {
     const BASE_PATH = ENV.BASE_PATH;
     const buscarAPRoute = ENV.API_ROUTES.L4bGEcZxAnjetUarpJVSCVOexDA4I8MYQwlLiL6CXUZzzh3zsIMaOAA;
     const crearUIRoute = ENV.API_ROUTES.XlZaTHhsYYDR7eUpe6Ock0YR3NApcri6EOjxDhJbtWVIC6nG4eCU1;
-    const [modalEstaAbierto, setModalEstaAbierto] = useState(false);
+    //const [modalEstaAbierto, setModalEstaAbierto] = useState(false);
     const [valoresFormulario, setValoresFormulario] = useState({
         Matricula: '',
         Nombre: '',
@@ -21,6 +21,7 @@ export default function useCrearUSFuctions() {
     const [mostrarAlerta, setMostrarAlerta] = useState(false);
     const [mensajeAlerta, setMensajeAlerta] = useState('');
 
+    /*
     const abrirModal = () => {
         setModalEstaAbierto(true);
     };
@@ -28,6 +29,7 @@ export default function useCrearUSFuctions() {
     const cerrarModal = () => {
         setModalEstaAbierto(false);
     };
+    */
 
     const manejarCambioInput = (e) => {
         const { name, value } = e.target;
@@ -100,11 +102,11 @@ export default function useCrearUSFuctions() {
     };
 
     return {
-        modalEstaAbierto,
+        //modalEstaAbierto,
         valoresFormulario,
         datosGuardados,
-        abrirModal,
-        cerrarModal,
+        //abrirModal,
+        //cerrarModal,
         manejarCambioInput,
         enviarFormulario,
         guardar,

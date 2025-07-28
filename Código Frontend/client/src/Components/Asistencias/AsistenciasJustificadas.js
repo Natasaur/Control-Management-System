@@ -6,9 +6,11 @@ export default function AsistenciManual() {
     const {
         valorFormulario,
         mensaje,
+        mostrarModal,
         alerta,
         manejarCambioEntrada,
-        enviarFormulario
+        enviarFormulario,
+        alternarModal
     } = useAsistenciaJFuctions();
 
     return (
@@ -61,7 +63,11 @@ export default function AsistenciManual() {
                 </div>
 
                 {alerta && <Alert variant={alerta.tipo}>{alerta.mensaje}</Alert>}
-                
+                {mostrarModal && (
+                    <Alert variant="success" onClose={alternarModal} dismissible>
+                        {mensaje}
+                    </Alert>
+                )}
 
                 <div className="text-center mt-4">
                     <button type="submit" className="btn btn-primary me-2">

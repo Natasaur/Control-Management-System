@@ -1,4 +1,4 @@
-import { useState, forwardRef } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -32,16 +32,18 @@ export default function useVisualizarAFunctions() {
         />
     ));
 
-    const obtenerAsistencias = async () => {
-        if (seleccionaFecha) {
+    useEffect(() => {
+        if (!matricula || !token) return;
+
+        const fetchAsistencias = async () => {
             setIsLoading(true);
-            const formattedDate = format(seleccionaFecha, 'dd/MM/yyyy');
             const urlAB = `${BASE_PATH}${RouteAB}`;
-            const data = {
-                matricula: matricula,
-                fecha: formattedDate,
-            };
-            console.log(data);
+            const data = { matricula };
+
+            if (seleccionaFecha) {
+                data.fecha = format(seleccionaFecha, 'dd/MM/yyyy');
+            }
+
             try {
                 const response = await axios.post(urlAB, data, {
                     headers: {
@@ -50,11 +52,42 @@ export default function useVisualizarAFunctions() {
                     },
                 });
                 setAsistencias(response.data);
+                setPaginaActual(1);
             } catch (error) {
                 console.error(error);
             } finally {
                 setIsLoading(false);
             }
+        };
+
+        fetchAsistencias();
+    }, [matricula, token]); // <--- solo ejecuta si existen
+
+    const obtenerAsistencias = async () => {
+        setIsLoading(true);
+        const urlAB = `${BASE_PATH}${RouteAB}`;
+        const data = {
+            matricula: matricula,
+        };
+
+        // Solo añade fecha si se seleccionó
+        if (seleccionaFecha) {
+            data.fecha = format(seleccionaFecha, 'dd/MM/yyyy');
+        }
+
+        try {
+            const response = await axios.post(urlAB, data, {
+                headers: {
+                    Authorization: `${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            setAsistencias(response.data);
+            setPaginaActual(1); // Reinicia a página 1
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false);
         }
     };
 

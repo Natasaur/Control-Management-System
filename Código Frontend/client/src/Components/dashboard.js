@@ -316,6 +316,7 @@ export default function Dashboard() {
                   dateFormat="dd/MM/yyyy"
                   className="form-control"
                   placeholderText="Seleccione una fecha"
+                  popperPlacement="bottom-start"
                 />
               </Form.Group>
               <Form.Group className="mb-3">
@@ -326,6 +327,7 @@ export default function Dashboard() {
                   dateFormat="dd/MM/yyyy"
                   className="form-control"
                   placeholderText="Seleccione una fecha"
+                  popperPlacement="bottom-start"
                 />
               </Form.Group>
               <Form.Group className="mb-3">
