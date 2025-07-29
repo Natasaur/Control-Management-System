@@ -5,7 +5,7 @@ import api from '../api/axios';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Cookies from 'js-cookie';
-import moment from "moment";
+//import moment from "moment";
 import "moment/locale/es";
 
 
@@ -187,60 +187,37 @@ export default function Dashboard() {
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
   const cargarDatosLine = async (body, token) => {
-    const res = await api.post("/alumno/contarAsistenciaPorDia", body, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log("body:", body);
-    console.log("res:", res.data);
+  const res = await api.post("/asistencia/contarAsistenciaPorDia", body, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-    // Diccionario: { lunes: [80, 85], martes: [60, 75], etc. }
-    const agrupadoPorDia = {
-      lunes: 0,
-      martes: 0,
-      miércoles: 0,
-      jueves: 0,
-      viernes: 0,
-      sábado: 0,
-      domingo: 0
-    };
+  console.log("body:", body);
+  console.log("res:", res.data);
 
-    if (res.data && Array.isArray(res.data.datos)) {
-      res.data.datos.forEach(d => {
-        const dia = moment(d.fecha, "DD/MM/YYYY").format("dddd"); // ej: "lunes"
-        if (agrupadoPorDia[dia] !== undefined) {
-          agrupadoPorDia[dia] += d.asistencias;
-        }
-      });
-    }
+  const asistenciasPorDiaSemana = res.data.asistenciasPorDiaSemana || {};
 
-    // Días en orden (opcionalmente con mayúscula inicial)
-    const diasSemanaOrdenados = [
-      "lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"
-    ];
+  const diasSemanaOrdenados = [
+    "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"
+  ];
 
-    const labels = [];
-    const data = [];
+  const labels = diasSemanaOrdenados;
+  const data = diasSemanaOrdenados.map(dia => asistenciasPorDiaSemana[dia] || 0);
 
-    diasSemanaOrdenados.forEach(dia => {
-      labels.push(dia.charAt(0).toUpperCase() + dia.slice(1)); // "Lunes"
-      data.push(agrupadoPorDia[dia]);
-    });
-
-    setDatosLine({
-      labels,
-      datasets: [
-        {
-          label: 'Asistencias por Día',
-          data: data,
-          borderColor: chartColors[0],
-          backgroundColor: chartColors[0],
-          fill: false
-        }
-      ]
-    });
-  };
+  setDatosLine({
+    labels,
+    datasets: [
+      {
+        label: 'Asistencias por Día',
+        data,
+        borderColor: chartColors[0],
+        backgroundColor: chartColors[0],
+        fill: false
+      }
+    ]
+  });
+};
 
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
   // █ CARGA DE GRÁFICA DOUGHNUT
@@ -316,6 +293,7 @@ export default function Dashboard() {
                   dateFormat="dd/MM/yyyy"
                   className="form-control"
                   placeholderText="Seleccione una fecha"
+                  popperPlacement="bottom-start"
                 />
               </Form.Group>
               <Form.Group className="mb-3">
@@ -326,6 +304,7 @@ export default function Dashboard() {
                   dateFormat="dd/MM/yyyy"
                   className="form-control"
                   placeholderText="Seleccione una fecha"
+                  popperPlacement="bottom-start"
                 />
               </Form.Group>
               <Form.Group className="mb-3">

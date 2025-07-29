@@ -208,35 +208,6 @@ async function contarAlumnosPorPlantel(req, res) {
   }
 }
 
-async function contarAsistenciaPorDia(req, res) {
-  const { fechaInicio, fechaFin, plantel, grupo } = req.body;
-
-  const fechaInicioDate = moment(fechaInicio, "DD/MM/YYYY").format("DD/MM/YYYY");
-  const fechaFinDate = moment(fechaFin, "DD/MM/YYYY").format("DD/MM/YYYY");
-
-  const asistencias = await Asistencia.find({
-    fecha: { $gte: fechaInicioDate, $lte: fechaFinDate },
-    ...(plantel ? { plantel } : {}),
-    ...(grupo ? { grupo } : {}),
-  });
-
-  // Agrupar por fecha
-  const agrupadas = {};
-
-  for (const a of asistencias) {
-    const fecha = moment(a.fecha).format("DD/MM/YYYY");
-    if (!agrupadas[fecha]) agrupadas[fecha] = 0;
-    agrupadas[fecha]++;
-  }
-
-  const datos = Object.entries(agrupadas).map(([fecha, asistencias]) => ({
-    fecha,
-    asistencias
-  }));
-
-  res.json({ datos });
-}
-
 module.exports = {
   crearAlumnoIndividual,
   crearListaAlumnos,
@@ -245,5 +216,4 @@ module.exports = {
   obtenerAlumnos,
   obtenerUnicoAlumno,
   contarAlumnosPorPlantel,
-  contarAsistenciaPorDia,
 };

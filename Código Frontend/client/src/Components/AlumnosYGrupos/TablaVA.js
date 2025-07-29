@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Modal, Card } from 'react-bootstrap';
 import { useTablaVA } from './TablaVAFunctios';
-import CrearUnicoAlumno from './CrearUnicoAlumno';
+//import CrearUnicoAlumno from './CrearUnicoAlumno';
 import Pagination from 'react-bootstrap/Pagination';
 
 export function TablaVA() {
@@ -218,7 +218,7 @@ export function TablaVA() {
                     <Button variant="warning" onClick={manejarEditarUsuario} disabled={!usuarioSeleccionado}>
                         Editar
                     </Button>
-                    <CrearUnicoAlumno />
+                    {/*<CrearUnicoAlumno />*/}
                     <Button variant="danger" onClick={mostrarConfirmacionEliminar} disabled={!usuarioSeleccionado}>
                         Eliminar
                     </Button>

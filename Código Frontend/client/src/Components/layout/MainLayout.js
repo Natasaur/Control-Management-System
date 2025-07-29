@@ -1,7 +1,8 @@
 import React from 'react';
-import { Container, Navbar, Nav, Button } from 'react-bootstrap';
+import { Container, Navbar, Nav, Button, NavDropdown } from 'react-bootstrap';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
+import Logo from '../../img/utc.png'
 
 export default function MainLayout({ setIsAuthenticated }) {
   const navigate = useNavigate();
@@ -22,36 +23,66 @@ export default function MainLayout({ setIsAuthenticated }) {
     <>
       <Navbar bg="dark" variant="dark" expand="lg">
         <Container>
-          <Navbar.Brand as={Link} to="/dashboard">
-            Control Management
+          <Navbar.Brand as={Link} to="/dashboard" className="d-flex align-items-center gap-2">
+            <img
+              src={Logo}
+              alt="Logo"
+              width="30"
+              height="30"
+              className="d-inline-block align-top"
+            />
+            Control Management System
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
-              <Nav.Link as={Link} to="/asistencias/manual" className="text-white text-decoration-none">
-                Registrar Asistencia Manual
-              </Nav.Link>
-              <Nav.Link as={Link} to="/asistencias/visualizar" className="text-white text-decoration-none">
-                Visualizar Asistencias
-              </Nav.Link>
-              <Nav.Link as={Link} to="/alumnos/crear" className="text-white text-decoration-none">
-                Registrar Alumno
-              </Nav.Link>
-              <Nav.Link as={Link} to="/alumnos/tabla" className="text-white text-decoration-none">
-                Visualizar Alumnos
-              </Nav.Link>
-              <Nav.Link as={Link} to="/usuarios/crear" className="text-white text-decoration-none">
-                Registrar Usuario
-              </Nav.Link>
-              <Nav.Link as={Link} to="/usuarios/tabla" className="text-white text-decoration-none">
-                Visualizar Usuarios
-              </Nav.Link>
-              <Nav.Link as={Link} to="/alertas" className="text-white text-decoration-none">
-                Exportar Alertas
-              </Nav.Link>
-              <Nav.Link as={Link} to="/parametros" className="text-white text-decoration-none">
-                Fechas Inhábiles
-              </Nav.Link>
+
+              {/* Asistencias */}
+              <NavDropdown title="Asistencias" id="asistencias-dropdown" className="text-white text-decoration-none">
+                <NavDropdown.Item as={Link} to="/asistencias/manual">
+                  Registrar Asistencia Justificada
+                </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/asistencias/visualizar">
+                  Visualizar Asistencias
+                </NavDropdown.Item>
+              </NavDropdown>
+
+              {/* Alumnos */}
+              <NavDropdown title="Alumnos" id="asistencias-dropdown" className="text-white text-decoration-none">
+                <NavDropdown.Item as={Link} to="/alumnos/crear">
+                  Registrar Único Alumno
+                </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/alumnos/tabla">
+                  Cargar Lista de Alumnos
+                </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/alumnos/visualizar">
+                  Visualizar Alumnos
+                </NavDropdown.Item>
+              </NavDropdown>
+
+              {/* Usuarios */}
+              <NavDropdown title="Usuarios" id="asistencias-dropdown" className="text-white text-decoration-none">
+                <NavDropdown.Item as={Link} to="/usuarios/crear">
+                  Registrar Único Usuario
+                </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/usuarios/tabla">
+                  Cargar Lista de Usuarios
+                </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/usuarios/visualizar">
+                  Visualizar Usuarios
+                </NavDropdown.Item>
+              </NavDropdown>
+
+              {/* Utilidades */}
+              <NavDropdown title="Utilidades" id="asistencias-dropdown" className="text-white text-decoration-none">
+                <NavDropdown.Item as={Link} to="/alertas">
+                  Exportar Alertas
+                </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/parametros">
+                  Registrar Fecha Inhábil
+                </NavDropdown.Item>
+              </NavDropdown>
+
             </Nav>
             <Button variant="outline-danger" onClick={handleLogout}>
               Cerrar sesión

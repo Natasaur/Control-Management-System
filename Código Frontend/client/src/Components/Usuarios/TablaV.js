@@ -4,12 +4,12 @@ import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import { Form } from 'react-bootstrap';
 import Alert from 'react-bootstrap/Alert';
-//import Pagination from 'react-bootstrap/Pagination';
+import Pagination from 'react-bootstrap/Pagination';
 import { useTablaVFuctions } from './TablaVFunctions';
 
 export default function TablaV() {
     const {
-        //usuario,
+        usuario,
         abrir,
         alerta,
         confirmarAbrir,
@@ -26,13 +26,13 @@ export default function TablaV() {
         handleCambio,
         seleccionarUsuario,
         usuariosPaginados,
-        /*irAPaginaAnterior,
+        irAPaginaAnterior,
         irAPaginaSiguiente,
         paginaActual,
         indiceFin, 
         buscarUsuarioPorMatricula,
         setMatriculaBusqueda,
-        matriculaBusqueda,*/
+        matriculaBusqueda,
         plantelNombres,
         handleCambioSelect
     } = useTablaVFuctions();
@@ -41,12 +41,12 @@ export default function TablaV() {
         <Card>
             <Card.Header className="d-flex justify-content-between align-items-center">
                 <h3 className="ad">Administrador de apoyo</h3>
-                {/*<Pagination>
+                <Pagination>
                     <Pagination.Prev onClick={irAPaginaAnterior} disabled={paginaActual === 1} />
                     <Pagination.Next onClick={irAPaginaSiguiente} disabled={indiceFin >= usuario.length} />
-                </Pagination> */}
+                </Pagination>
             </Card.Header>
-            {/*<div className="container d-flex justify-content-center m-4 align-items-center">
+            <div className="container d-flex justify-content-center m-4 align-items-center">
                 <Form.Group controlId="matriculaBusqueda">
                     <Form.Control
                         type="text"
@@ -58,18 +58,19 @@ export default function TablaV() {
                 <Button variant="primary" onClick={() => buscarUsuarioPorMatricula(matriculaBusqueda)}>
                     Buscar
                 </Button>
-            </div> */}
+            </div> 
             <Card.Body style={{ overflow: 'auto' }}>
-                <table className="tabla">
+                <table className="tabla" style={{ borderCollapse: 'collapse', width: '100%' }}>
                     <thead>
                         <tr>
-                            <th className="columna">Matrícula</th>
-                            <th className="columna">Nombre</th>
-                            <th className="columna">Apellido paterno</th>
-                            <th className="columna">Apellido materno</th>
-                            <th className="columna">Plantel</th>
-                            <th className="columna">Correo</th>
-                            <th className="columna">Rol</th>
+                            <th className="columna" style={{ border: '1px solid #ccc', padding: '8px' }}>Matrícula</th>
+                            <th className="columna" style={{ border: '1px solid #ccc', padding: '8px' }}>Nombre</th>
+                            <th className="columna" style={{ border: '1px solid #ccc', padding: '8px' }}>Apellido paterno</th>
+                            <th className="columna" style={{ border: '1px solid #ccc', padding: '8px' }}>Apellido materno</th>
+                            <th className="columna" style={{ border: '1px solid #ccc', padding: '8px' }}>Plantel</th>
+                            <th className="columna" style={{ border: '1px solid #ccc', padding: '8px' }}>Correo</th>
+                            <th className="columna" style={{ border: '1px solid #ccc', padding: '8px' }}>Grupos</th>
+                            {/*<th className="columna">Rol</th>*/}
                         </tr>
                     </thead>
                     <tbody>
@@ -79,15 +80,16 @@ export default function TablaV() {
                                     key={usuario.matricula}
                                     className={seleccionarUsuarioId === usuario.matricula ? 'selected' : ''}
                                     onClick={() => handleClickFila(usuario)}
+                                    style={{ border: '1px solid #ccc' }}
                                 >
-                                    <td className="columna">{usuario.matricula}</td>
-                                    <td className="columna">{usuario.nombre}</td>
-                                    <td className="columna">{usuario.apellido_paterno}</td>
-                                    <td className="columna">{usuario.apellido_materno}</td>
-                                    <td className="columna">{plantelNombres[usuario.plantel]}</td>
-                                    <td className="columna">{usuario.correo}</td>
-                                    <td className="columna">{usuario.rol === 'AP' ? 'Administrador de apoyo' : usuario.rol}</td>
-                                    <td className="columna">{usuario.grupos.join(', ')}</td>
+                                    <td className="columna" style={{ padding: '8px' }}>{usuario.matricula}</td>
+                                    <td className="columna" style={{ padding: '8px' }}>{usuario.nombre}</td>
+                                    <td className="columna" style={{ padding: '8px' }}>{usuario.apellido_paterno}</td>
+                                    <td className="columna" style={{ padding: '8px' }}>{usuario.apellido_materno}</td>
+                                    <td className="columna" style={{ padding: '8px' }}>{plantelNombres[usuario.plantel]}</td>
+                                    <td className="columna" style={{ padding: '8px' }}>{usuario.correo}</td>
+                                    {/*<td className="columna">{usuario.rol === 'AP' ? 'Administrador de apoyo' : usuario.rol}</td>*/}
+                                    <td className="columna" style={{ padding: '8px' }}>{usuario.grupos.join(', ')}</td>
                                 </tr>
                             ))}
                     </tbody>

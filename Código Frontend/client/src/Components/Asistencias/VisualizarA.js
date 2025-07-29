@@ -26,7 +26,9 @@ export default function VisualizarA() {
     return (
         <Card>
             <Card.Header>
-                <h3>Visualizar asistencias</h3>
+                <div>
+                    <h3 className="text-center mb-4" style={{ backgroundColor: '#FD7E14', color: 'white', padding: '10px' }}>Visualizar asistencias</h3>
+                </div>
                 <p>Selecciona una fecha</p>
             </Card.Header>
             <Card.Body>
@@ -40,7 +42,7 @@ export default function VisualizarA() {
                 />
             </div>
             <div className="mr-9">
-                <Button onClick={obtenerAsistencias}>Obtener asistencias</Button>
+                <Button onClick={obtenerAsistencias}>Filtrar por fecha</Button>
             </div>
 
             {isLoading && <Spinner animation="border" variant="primary" />}

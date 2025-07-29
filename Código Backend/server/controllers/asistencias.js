@@ -5,7 +5,7 @@ const Alumno = require("../models/alumnos");
 const Plantel = require("../models/planteles");
 const Carrera = require("../models/carreras")
 const DiasNoLaborables = require("../models/dias_no_laborables");
-//const moment = require("moment"); // o Date si no quieres librerías
+const moment = require("moment"); // o Date si no quieres librerías
 
 
 
@@ -29,12 +29,14 @@ async function crearAsistenciaIndividual(req, res) {
   if (!tipo_asistencia)
     res.status(400).send({ msg: "Tipo asistencia es requerido" });
 
+  const fechaFormateada = moment(req.body.fecha, "DD/MM/YYYY").toDate();
+
   const asistencia = new Asistencia({
-    matricula,
-    grupo,
-    ciclo_escolar,
-    fecha,
-    tipo_asistencia,
+    matricula: req.body.matricula,
+    grupo: req.body.grupo,
+    ciclo_escolar: req.body.ciclo_escolar,
+    fecha: fechaFormateada,
+    tipo_asistencia: req.body.tipo_asistencia,
   });
 
   const asistenciaExistente = await Asistencia.find({ matricula, fecha });
@@ -43,7 +45,7 @@ async function crearAsistenciaIndividual(req, res) {
     await asistencia.save((error, userStorage) => {
       if (error) {
         res.status(400).send({ msg: "Error al cargar la asistencia" });
-        console.log(error);
+        //console.log(error);
       } else {
         res.status(200).send(userStorage);
       }
@@ -148,48 +150,58 @@ async function obtenerAsistencia(req, res) {
 async function porcentajeAsistenciaPlantel(req, res) {
   try {
     const { fechaInicio, fechaFin, plantel } = req.body;
-    let planteles = [];
-
-    if (plantel) {
-      // Traer solo un plantel
-      planteles = await Plantel.find({ clave: plantel });
-    } else {
-      // Traer todos
-      planteles = await Plantel.find();
-    }
 
     if (!fechaInicio || !fechaFin) {
       return res.status(400).json({ msg: "Faltan fechas en el body" });
     }
 
-    const diasNoLaborables = await DiasNoLaborables.find({
-      modalidad: "Escolarizado"
-    });
-
-    const fechasExcluidas = diasNoLaborables.map(d => d.fecha);
-    const arrayFechas = generarFechas(fechaInicio, fechaFin);
-
-    const fechas = await Fechas_asistencias.find({
-      fecha: {
-        $in: arrayFechas,
-        $nin: fechasExcluidas
+    // Función para parsear fechas en ISO o DD/MM/YYYY
+    function parseFecha(fechaStr) {
+      let fecha = moment(fechaStr, moment.ISO_8601, true);
+      if (!fecha.isValid()) {
+        fecha = moment(fechaStr, "DD/MM/YYYY", true);
       }
+      return fecha;
+    }
+
+    const fechaInicioMoment = parseFecha(fechaInicio);
+    const fechaFinMoment = parseFecha(fechaFin);
+
+    if (!fechaInicioMoment.isValid() || !fechaFinMoment.isValid()) {
+      return res.status(400).json({ msg: "Formato de fecha inválido" });
+    }
+
+    // Para generar array de fechas, asumiendo que generarFechas acepta objetos Date
+    const arrayFechas = generarFechas(fechaInicioMoment.toDate(), fechaFinMoment.toDate());
+
+    let planteles = [];
+    if (plantel) {
+      planteles = await Plantel.find({ clave: plantel });
+    } else {
+      planteles = await Plantel.find();
+    }
+
+    const diasNoLaborables = await DiasNoLaborables.find({ modalidad: "Escolarizado" });
+    const fechasExcluidas = diasNoLaborables.map(d => d.fecha);
+
+    // Filtrar fechas para excluir dias no laborables
+    const fechasFiltradas = arrayFechas.filter(f => {
+      return !fechasExcluidas.some(fechaExcluida =>
+        moment(fechaExcluida).isSame(moment(f), 'day')
+      );
     });
 
-    const fechasLargo = fechas.length;
-    
+    const fechasLargo = fechasFiltradas.length;
 
     const alumnos = await Alumno.find();
-    //const planteles = await Plantel.find();
 
     // Agrupar alumnos por plantel
     const alumnosPorPlantel = {};
-    for (const plantel of planteles) {
-      alumnosPorPlantel[plantel.clave] = [];
+    for (const p of planteles) {
+      alumnosPorPlantel[p.clave] = [];
     }
-
     for (const alumno of alumnos) {
-      const letraPlantel = alumno.grupo[1];
+      const letraPlantel = alumno.grupo[1]; // aquí asumo que la clave plantel está en la segunda letra de grupo
       if (alumnosPorPlantel[letraPlantel]) {
         alumnosPorPlantel[letraPlantel].push(alumno.matricula);
       }
@@ -206,14 +218,12 @@ async function porcentajeAsistenciaPlantel(req, res) {
       if (cantidadAlumnos > 0) {
         asistenciasRegistradas = await Asistencia.countDocuments({
           matricula: { $in: alumnosPlantel },
-          fecha: { $in: arrayFechas },
+          fecha: { $in: fechasFiltradas }
         });
       }
 
       const porcentajeAsistencia = asistenciasMaximas
-        ? parseFloat(
-            ((asistenciasRegistradas * 100) / asistenciasMaximas).toFixed(2)
-          )
+        ? parseFloat(((asistenciasRegistradas * 100) / asistenciasMaximas).toFixed(2))
         : 0;
 
       respuesta.push({
@@ -226,13 +236,14 @@ async function porcentajeAsistenciaPlantel(req, res) {
     }
 
     res.status(200).json({
-      fechas: arrayFechas,
+      fechas: fechasFiltradas,
       cantidadFechas: fechasLargo,
       datos: respuesta,
     });
+
   } catch (error) {
-    console.log("ERROR EN PORCENTAJE ASISTENCIA PLANTEL:", error);
-    res.status(400).json({ msg: error.message });
+    console.error("ERROR EN PORCENTAJE ASISTENCIA PLANTEL:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
   }
 }
 
@@ -519,9 +530,9 @@ async function porcentajeAsistenciaCarrera(req, res) {
       }
     }
 
-    console.log('Carreras:', carreras);
-    console.log('Alumnos:', alumnos);
-    console.log('Conteo por carrera:', conteoCarreras);
+    //console.log('Carreras:', carreras);
+    //console.log('Alumnos:', alumnos);
+    //console.log('Conteo por carrera:', conteoCarreras);
 
 
     // Preparar respuesta
@@ -813,6 +824,66 @@ async function porcentajeAsistenciaDiario(req, res) {
   }
 }
 
+async function contarAsistenciaPorDia(req, res) {
+  const { fechaInicio, fechaFin, plantel, grupo, carrera } = req.body;
+
+  if (!fechaInicio || !fechaFin) {
+    return res.status(400).json({ msg: "Faltan fechas en el body" });
+  }
+
+  // Función que intenta parsear fecha ISO o DD/MM/YYYY
+  function parseFecha(fechaStr) {
+    let fecha = moment(fechaStr, moment.ISO_8601, true);
+    if (!fecha.isValid()) {
+      fecha = moment(fechaStr, "DD/MM/YYYY", true);
+    }
+    return fecha;
+  }
+
+  const fechaInicioMoment = parseFecha(fechaInicio);
+  const fechaFinMoment = parseFecha(fechaFin);
+
+  if (!fechaInicioMoment.isValid() || !fechaFinMoment.isValid()) {
+    return res.status(400).json({ msg: "Formato de fecha inválido" });
+  }
+
+  const fechaInicioDate = fechaInicioMoment.startOf("day").toDate();
+  const fechaFinDate = fechaFinMoment.endOf("day").toDate();
+
+  try {
+    const asistencias = await Asistencia.find({
+      fecha: { $gte: fechaInicioDate, $lte: fechaFinDate },
+      ...(plantel ? { plantel } : {}),
+      ...(grupo ? { grupo } : {}),
+      ...(carrera ? { carrera } : {}),
+    });
+
+    // Inicializar conteo por día de la semana en español (capitalizado)
+    const diasSemana = {
+      "Domingo": 0,
+      "Lunes": 0,
+      "Martes": 0,
+      "Miércoles": 0,
+      "Jueves": 0,
+      "Viernes": 0,
+      "Sábado": 0
+    };
+
+    asistencias.forEach(a => {
+      const dia = moment(a.fecha).locale('es').format('dddd'); // ej: "lunes"
+      const diaCapitalizado = dia.charAt(0).toUpperCase() + dia.slice(1);
+      if (diasSemana[diaCapitalizado] !== undefined) {
+        diasSemana[diaCapitalizado]++;
+      }
+    });
+
+    res.json({ asistenciasPorDiaSemana: diasSemana });
+  } catch (error) {
+    console.error("❌ Error al contar asistencias:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+}
+
 async function saludar() {
   console.log("Hola buenas como estan");
 }
@@ -820,7 +891,6 @@ async function saludar() {
 
 
 //-----     NUEVAS FUNCIONES     -------//
-const moment = require("moment");
 
 async function resumenAsistenciasPorGrupo(req, res) {
   try {
@@ -936,19 +1006,12 @@ async function alumnosConFaltas(req, res) {
 function generarFechas(fechaInicio, fechaFin) {
   const fechas = [];
 
-  const [diaInicio, mesInicio, anioInicio] = fechaInicio.split('/');
-  const [diaFin, mesFin, anioFin] = fechaFin.split('/');
+  let actual = moment(fechaInicio);
+  const fin = moment(fechaFin);
 
-  let current = new Date(`${anioInicio}-${mesInicio}-${diaInicio}`);
-  const end = new Date(`${anioFin}-${mesFin}-${diaFin}`);
-
-  while (current <= end) {
-    const day = String(current.getDate()).padStart(2, '0');
-    const month = String(current.getMonth() + 1).padStart(2, '0');
-    const year = current.getFullYear();
-
-    fechas.push(`${day}/${month}/${year}`);
-    current.setDate(current.getDate() + 1);
+  while (actual <= fin) {
+    fechas.push(actual.toDate());
+    actual = actual.add(1, 'days');
   }
 
   return fechas;
@@ -970,4 +1033,5 @@ module.exports = {
   saludar,
   resumenAsistenciasPorGrupo,
   alumnosConFaltas,
+  contarAsistenciaPorDia,
 };

@@ -1,13 +1,13 @@
 import React from 'react';
-import { Button, Modal } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import useCrearUSFuctions from './CrearUSFuctions';
 
 export default function CrearUnicoU() {
     const {
-        modalEstaAbierto,
+        //modalEstaAbierto,
         valoresFormulario,
-        abrirModal,
-        cerrarModal,
+        //abrirModal,
+        //cerrarModal,
         manejarCambioInput,
         enviarFormulario,
         mostrarAlerta,
@@ -16,6 +16,7 @@ export default function CrearUnicoU() {
 
     return (
         <div className="box-u-5">
+        {/* 
             {modalEstaAbierto && <div className="modal-overlay" onClick={cerrarModal}></div>}
             <Button
                 variant="success"
@@ -29,6 +30,7 @@ export default function CrearUnicoU() {
                     <Modal.Title>Ingrese los siguientes datos:</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
+                 */}
                     <form onSubmit={enviarFormulario}>
                         <div className="mb-3">
                             <label htmlFor="Matricula" className="form-label">Matrícula del usuario</label>
@@ -130,11 +132,13 @@ export default function CrearUnicoU() {
                         {mostrarAlerta && <div style={{ color: 'red' }}>{mensajeAlerta}</div>}
                         <div className="d-flex justify-content-center">
                             <Button type="submit" variant="success" className="mr-2">Guardar</Button>
-                            <Button type="button" variant="danger" onClick={cerrarModal}>Cancelar</Button>
+                            {/*<Button type="button" variant="danger" onClick={cerrarModal}>Cancelar</Button>*/}
                         </div>
                     </form>
+    {/* 
                 </Modal.Body>
             </Modal>
+            */}
         </div>
     );
 }

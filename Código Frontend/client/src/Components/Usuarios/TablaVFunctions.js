@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { ENV } from "../../utils/Constants";
 
 export function useTablaVFuctions() {
     const BASE_PATH = ENV.BASE_PATH;
-    const RouteUBA = ENV.API_ROUTES.L4bGEcZxAnjetUarpJVSCVOexDA4I8MYQwlLiL6CXUZzzh3zsIMaOAA;
+    const RouteUBU = ENV.API_ROUTES.aQB4BaS1i3puGyzLQdK79kupg3aShSpIOU;
+    //const RouteUBA = ENV.API_ROUTES.L4bGEcZxAnjetUarpJVSCVOexDA4I8MYQwlLiL6CXUZzzh3zsIMaOAA;
     const RouteUA = ENV.API_ROUTES.G22HHEoHdp2J1jF4JShU8w8ixWpbs6g7Ft1ViZbuvPoNNl23dAU;
     const RouteUE = ENV.API_ROUTES.YVCzWobTmjwdBLxpnvZDCN50xuLa5EU;
     const RouteUBM = ENV.API_ROUTES.kPBnDqc5yVlf0Hs7cjzhJ8vA9OZwjjxnZydqwJQceEGuvp59ONOUU;
@@ -20,25 +21,25 @@ export function useTablaVFuctions() {
     const [alerta, setAlerta] = useState(null);
     const token = Cookies.get('token');
 
-    useEffect(() => {
-        if (token) {
-            fetchUsuarios();
-        }
-    }, []);
-
-    const fetchUsuarios = async () => {
+    const fetchUsuarios = useCallback(async () => {
         try {
-            const urlUBA = `${BASE_PATH}${RouteUBA}`;
-            const response = await axios.get(urlUBA, {
+            const urlUBU = `${BASE_PATH}${RouteUBU}`;
+            const response = await axios.get(urlUBU, {
                 headers: {
-                    Authorization: `${token}`,
+                    Authorization: token ? `Bearer ${token}` : '',
                 },
             });
             setUsuarios(response.data);
         } catch (error) {
             console.error("Error al obtener los datos:", error);
         }
-    };
+    }, [BASE_PATH, RouteUBU, token]);
+
+    useEffect(() => {
+        if (token) {
+            fetchUsuarios();
+        }
+    }, [fetchUsuarios, token]);
 
     const actualizarUsuario = async (usuarioActualizado) => {
         try {
