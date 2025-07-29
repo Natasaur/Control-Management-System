@@ -82,6 +82,11 @@ api.post("/asistencia/buscar/porcentaje/diario",
   //[authAdmin],
   asistenciasController.porcentajeAsistenciaDiario
 );
+api.post(
+  "/asistencia/contarAsistenciaPorDia",
+  //[authAdmin],
+  asistenciasController.contarAsistenciaPorDia
+);
 
 
 module.exports = api;

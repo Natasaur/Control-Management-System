@@ -44,10 +44,5 @@ api.post(
   //[authAdmin],
   alumnosController.contarAlumnosPorPlantel
 );
-api.post(
-  "/alumno/contarAsistenciaPorDia",
-  //[authAdmin],
-  alumnosController.contarAsistenciaPorDia
-);
 
 module.exports = api;

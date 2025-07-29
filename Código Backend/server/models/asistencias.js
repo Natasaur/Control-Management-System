@@ -1,11 +1,26 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const asistenciasSchema = new mongoose.Schema({
-  matricula: String,
-  grupo: String,
-  ciclo_escolar: String,
-  fecha: String,
-  tipo_asistencia: String,
-});
+const AsistenciaSchema = new mongoose.Schema({
+  matricula: {
+    type: String,
+    required: true,
+  },
+  grupo: {
+    type: String,
+    required: true,
+  },
+  ciclo_escolar: {
+    type: String,
+    required: true,
+  },
+  fecha: {
+    type: Date, // Importante: debe ser tipo Date
+    required: true,
+  },
+  tipo_asistencia: {
+    type: String,
+    required: true,
+  },
+}, { collection: 'asistencias' }); // Asegura usar la colección correcta
 
-module.exports = mongoose.model("asistencias", asistenciasSchema);
+module.exports = mongoose.model('Asistencia', AsistenciaSchema);
