@@ -87,6 +87,11 @@ api.post(
   //[authAdmin],
   asistenciasController.contarAsistenciaPorDia
 );
+api.post(
+  "/asistencia/contarFaltasPorAlumno",
+  //[authAdmin],
+  asistenciasController.contarFaltasPorAlumno
+);
 
 
 module.exports = api;
