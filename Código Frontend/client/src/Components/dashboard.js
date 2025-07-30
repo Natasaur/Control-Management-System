@@ -5,9 +5,9 @@ import api from '../api/axios';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Cookies from 'js-cookie';
-//import moment from "moment";
 import "moment/locale/es";
-
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 import {
   Chart as ChartJS,
@@ -66,6 +66,55 @@ export default function Dashboard() {
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
   // █ CARGA DE CATÁLOGOS
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+  const exportarExcelBarras = () => {
+    const wb = XLSX.utils.book_new();
+    const data = datosBarras.labels.map((label, index) => ({
+      Plantel: label,
+      '% Asistencias': datosBarras.datasets[0].data[index],
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Barras");
+    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'asistencias_plantel.xlsx');
+  };
+
+  const exportarExcelPie = () => {
+    const wb = XLSX.utils.book_new();
+    const data = datosPie.labels.map((label, index) => ({
+      Carrera: label,
+      '% Alumnos': datosPie.datasets[0].data[index],
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Carreras");
+    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'distribucion_carreras.xlsx');
+  };
+
+  const exportarExcelLine = () => {
+    const wb = XLSX.utils.book_new();
+    const data = datosLine.labels.map((label, index) => ({
+      Día: label,
+      'Asistencias': datosLine.datasets[0].data[index],
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Asistencias por Día");
+    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'asistencias_dia.xlsx');
+  };
+
+  const exportarExcelDoughnut = () => {
+    const wb = XLSX.utils.book_new();
+    const data = datosDoughnut.labels.map((label, index) => ({
+      Categoría: label,
+      Alumnos: datosDoughnut.datasets[0].data[index],
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Faltas");
+    const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    saveAs(new Blob([buffer], { type: 'application/octet-stream' }), 'faltas_alumnos.xlsx');
+  };
+
   const fetchPlanteles = async () => {
     try {
       const token = Cookies.get("token");
@@ -373,16 +422,40 @@ export default function Dashboard() {
             <>
               <Row className="mb-4">
                 <Card>
-                  <Card.Header>Asistencias por Plantel</Card.Header>
+                  <Card.Header className="d-flex justify-content-between align-items-center">
+                    Asistencias por Plantel
+                    <Button size="sm" variant="outline-success" onClick={exportarExcelBarras}>
+                      Descargar
+                    </Button>
+                  </Card.Header>
                   <Card.Body>
                     <Bar data={datosBarras} options={{ responsive: true }} />
                   </Card.Body>
                 </Card>
               </Row>
               <Row>
+                <Card className='mb-3'>
+                    <Card.Header className="d-flex justify-content-between align-items-center">
+                      Promedio de Asistencias por Día
+                      <Button size="sm" variant="outline-success" onClick={exportarExcelLine}>
+                        Descargar
+                      </Button>
+                    </Card.Header>
+                    <Card.Body>
+                      <Line data={datosLine} options={{ responsive: true }} />
+                    </Card.Body>
+                  </Card>
+                  
+              </Row>
+              <Row>
                 <Col md={6}>
                   <Card>
-                    <Card.Header>Distribución de Carreras</Card.Header>
+                    <Card.Header className="d-flex justify-content-between align-items-center">
+                      Distribución de Carreras
+                      <Button size="sm" variant="outline-success" onClick={exportarExcelPie}>
+                        Descargar
+                      </Button>
+                    </Card.Header>
                     <Card.Body>
                       {datosPie ? (
                         <Pie data={datosPie} options={{ responsive: true }} />
@@ -395,18 +468,13 @@ export default function Dashboard() {
                   </Card>
                 </Col>
                 <Col md={6}>
-                  <Card className='mb-3'>
-                    <Card.Header>Promedio de Asistencias por Día</Card.Header>
-                    <Card.Body>
-                      <Line data={datosLine} options={{ responsive: true }} />
-                    </Card.Body>
-                  </Card>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={6}>
                   <Card>
-                    <Card.Header>Porcentaje Alumnos con más de 3 Faltas</Card.Header>
+                    <Card.Header className="d-flex justify-content-between align-items-center">
+                      Porcentaje Alumnos con más de 3 Faltas
+                      <Button size="sm" variant="outline-success" onClick={exportarExcelDoughnut}>
+                        Descargar
+                      </Button>
+                    </Card.Header>
                     <Card.Body>
                       <Doughnut data={datosDoughnut} options={{ responsive: true }} />
                     </Card.Body>
