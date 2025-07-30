@@ -193,9 +193,6 @@ export default function Dashboard() {
     },
   });
 
-  console.log("body:", body);
-  console.log("res:", res.data);
-
   const asistenciasPorDiaSemana = res.data.asistenciasPorDiaSemana || {};
 
   const diasSemanaOrdenados = [
@@ -223,17 +220,29 @@ export default function Dashboard() {
   // █ CARGA DE GRÁFICA DOUGHNUT
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-  const cargarDatosDoughnut = () => {
-    setDatosDoughnut({
-      labels: ['>3 faltas', '≤3 faltas'],
-      datasets: [
-        {
-          data: [20, 80],
-          backgroundColor: chartColors.slice(0, 2)
-        }
-      ]
-    });
-  };
+ const cargarDatosDoughnut = async (body, token) => {
+  const res = await api.post("/asistencia/contarFaltasPorAlumno", body, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  console.log("body:", body);
+  console.log("res:", res.data);
+
+  const { masDeTresFaltas, tresOFaltasMenos } = res.data;
+
+  setDatosDoughnut({
+    labels: ['>3 faltas', '≤3 faltas'],
+    datasets: [
+      {
+        data: [masDeTresFaltas, tresOFaltasMenos],
+        backgroundColor: chartColors.slice(0, 2)
+      }
+    ]
+  });
+};
+
 
   // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
   // █ FUNCIÓN MAESTRA PARA CARGAR TODO
@@ -258,7 +267,7 @@ export default function Dashboard() {
         cargarDatosBarras(body, token),
         cargarDatosPie(body, token),
         cargarDatosLine(body, token),
-        cargarDatosDoughnut()
+        cargarDatosDoughnut(body, token)
       ]);
 
       setLoading(false);

@@ -184,11 +184,13 @@ async function porcentajeAsistenciaPlantel(req, res) {
     const diasNoLaborables = await DiasNoLaborables.find({ modalidad: "Escolarizado" });
     const fechasExcluidas = diasNoLaborables.map(d => d.fecha);
 
-    // Filtrar fechas para excluir dias no laborables
+    // Asegúrate de que tanto `fechaExcluida` como `f` estén parseadas correctamente
     const fechasFiltradas = arrayFechas.filter(f => {
-      return !fechasExcluidas.some(fechaExcluida =>
-        moment(fechaExcluida).isSame(moment(f), 'day')
-      );
+      const fechaFormateada = moment(f, "YYYY-MM-DD", true);
+      return !fechasExcluidas.some(fechaExcluida => {
+        const excluidaMoment = moment(fechaExcluida, "YYYY-MM-DD", true);
+        return excluidaMoment.isValid() && fechaFormateada.isValid() && excluidaMoment.isSame(fechaFormateada, 'day');
+      });
     });
 
     const fechasLargo = fechasFiltradas.length;
@@ -1003,20 +1005,82 @@ async function alumnosConFaltas(req, res) {
   }
 }
 
-function generarFechas(fechaInicio, fechaFin) {
-  const fechas = [];
+async function contarFaltasPorAlumno(req, res) {
+  const { fechaInicio, fechaFin, grupo, plantel, carrera } = req.body;
 
-  let actual = moment(fechaInicio);
-  const fin = moment(fechaFin);
-
-  while (actual <= fin) {
-    fechas.push(actual.toDate());
-    actual = actual.add(1, 'days');
+  if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ msg: "Faltan fechas" });
   }
 
-  return fechas;
+  // Función que intenta parsear fecha ISO o DD/MM/YYYY
+  function parseFecha(fechaStr) {
+    let fecha = moment(fechaStr, moment.ISO_8601, true);
+    if (!fecha.isValid()) {
+      fecha = moment(fechaStr, "DD/MM/YYYY", true);
+    }
+    return fecha;
+  }
+
+  const fechaInicioMoment = parseFecha(fechaInicio);
+  const fechaFinMoment = parseFecha(fechaFin);
+
+  if (!fechaInicioMoment.isValid() || !fechaFinMoment.isValid()) {
+    return res.status(400).json({ msg: "Formato de fecha inválido" });
+  }
+
+  const fechaInicioDate = fechaInicioMoment.startOf("day").toDate();
+  const fechaFinDate = fechaFinMoment.endOf("day").toDate();
+  try {
+    const asistencias = await Asistencia.find({
+      fecha: { $gte: fechaInicioDate, $lte: fechaFinDate },
+      ...(plantel ? { plantel } : {}),
+      ...(grupo ? { grupo } : {}),
+      ...(carrera ? { carrera } : {}),
+    });
+
+    // Generar las fechas en el rango
+    const fechas = generarFechas(fechaInicioDate, fechaFinDate);
+
+    let masDeTres = 0;
+    let tresOMenos = 0;
+
+    for (const asistencia of asistencias) {
+      let asistenciasAlumno = await Asistencia.find({
+        matricula: asistencia.matricula,
+        fecha: { $gte: fechaInicioDate, $lte: fechaFinDate }
+      });
+
+      const asistenciasRegistradas = asistenciasAlumno.length;
+      const totalEsperado = fechas.length;
+      const faltas = totalEsperado - asistenciasRegistradas;
+
+      if (faltas > 3) {
+        masDeTres++;
+      } else {
+        tresOMenos++;
+      }
+    }
+
+    res.json({
+      masDeTresFaltas: masDeTres,
+      tresOFaltasMenos: tresOMenos
+    });
+  } catch (error) {
+    console.error("Error en contarFaltasPorAlumno:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
 }
 
+function generarFechas(fechaInicio, fechaFin) {
+  const fechas = [];
+  let inicio = moment(fechaInicio, "DD/MM/YYYY"); // o "YYYY-MM-DD"
+  const fin = moment(fechaFin, "DD/MM/YYYY");
+  while (inicio <= fin) {
+    fechas.push(inicio.toDate());
+    inicio.add(1, 'days');
+  }
+  return fechas;
+}
 
 module.exports = {
   crearAsistenciaIndividual,
@@ -1034,4 +1098,5 @@ module.exports = {
   resumenAsistenciasPorGrupo,
   alumnosConFaltas,
   contarAsistenciaPorDia,
+  contarFaltasPorAlumno,
 };
