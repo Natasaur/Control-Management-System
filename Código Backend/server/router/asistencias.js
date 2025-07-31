@@ -26,7 +26,7 @@ api.delete(
 api.post(
   "/asistencia/buscar",
   //[authConsultor],
-  [authAdmin],
+  //[authAdmin],
   asistenciasController.obtenerAsistencia
 );
 api.post(

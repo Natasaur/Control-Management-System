@@ -15,8 +15,11 @@ export default function useVisualizarAFunctions() {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [asistenciaSeleccionada, setAsistenciaSeleccionada] = useState(null);
     const token = Cookies.get('token');
-    const matricula = Cookies.get('matricula');
+    //const matricula = Cookies.get('matricula');
     const [isLoading, setIsLoading] = useState(false);
+    const [fechaInicio, setFechaInicio] = useState(null);
+    const [fechaFin, setFechaFin] = useState(null);
+    const [tipo_asistencia, setTipoAsistencia] = useState('');
 
     const cambiarFecha = (date) => {
         setSeleccionarFecha(date);
@@ -33,47 +36,51 @@ export default function useVisualizarAFunctions() {
     ));
 
     useEffect(() => {
-        if (!matricula || !token) return;
+        let isMounted = true;
+        if (!token) return;
 
         const fetchAsistencias = async () => {
             setIsLoading(true);
             const urlAB = `${BASE_PATH}${RouteAB}`;
-            const data = { matricula };
-
-            if (seleccionaFecha) {
-                data.fecha = format(seleccionaFecha, 'dd/MM/yyyy');
-            }
 
             try {
-                const response = await axios.post(urlAB, data, {
+                const response = await axios.post(urlAB, {}, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
                     },
                 });
-                setAsistencias(response.data);
-                setPaginaActual(1);
+                if (isMounted) {
+                    setAsistencias(response.data);
+                    setPaginaActual(1);
+                }
             } catch (error) {
                 console.error(error);
             } finally {
-                setIsLoading(false);
+                if (isMounted) setIsLoading(false);
             }
         };
 
         fetchAsistencias();
-    }, [matricula, token]); // <--- solo ejecuta si existen
 
-    const obtenerAsistencias = async () => {
+        return () => {
+            isMounted = false;
+        };
+    }, [token]);
+
+    const obtenerAsistencias = async ({ fechaInicio, fechaFin, tipo_asistencia }) => {
+        if (!token) {
+            setIsLoading(false);
+            return;
+        }
+
         setIsLoading(true);
         const urlAB = `${BASE_PATH}${RouteAB}`;
-        const data = {
-            matricula: matricula,
-        };
+        const data = {};
 
-        // Solo añade fecha si se seleccionó
-        if (seleccionaFecha) {
-            data.fecha = format(seleccionaFecha, 'dd/MM/yyyy');
-        }
+        if (fechaInicio) data.fechaInicio = format(fechaInicio, 'yyyy-MM-dd');
+        if (fechaFin) data.fechaFin = format(fechaFin, 'yyyy-MM-dd');
+        if (tipo_asistencia) data.tipo_asistencia = tipo_asistencia;
 
         try {
             const response = await axios.post(urlAB, data, {
@@ -83,7 +90,7 @@ export default function useVisualizarAFunctions() {
                 },
             });
             setAsistencias(response.data);
-            setPaginaActual(1); // Reinicia a página 1
+            setPaginaActual(1);
         } catch (error) {
             console.error(error);
         } finally {
@@ -91,7 +98,7 @@ export default function useVisualizarAFunctions() {
         }
     };
 
-    const numeroPagina = 5; // Número de elementos por página
+    const numeroPagina = 15; // Número de elementos por página
 
     // Lógica para calcular los índices de inicio y fin de los elementos a mostrar en la página actual
     const indiceUltimoElemento = paginaActual * numeroPagina;
@@ -114,9 +121,9 @@ export default function useVisualizarAFunctions() {
     };
 
     // Función para eliminar una asistencia
-    const eliminarAsistencia = (matricula, fecha) => {
+    const eliminarAsistencia = (_id) => {
         const urlAE = `${BASE_PATH}${RouteAE}`;
-        const data = { matricula, fecha };
+        const data = { _id };
 
         axios
             .delete(urlAE, {
@@ -126,7 +133,7 @@ export default function useVisualizarAFunctions() {
                 data: data,
             })
             .then(() => {
-                const nuevasAsistencias = asistencias.filter((asistencia) => asistencia.matricula !== matricula || asistencia.fecha !== fecha);
+                const nuevasAsistencias = asistencias.filter((asistencia) => asistencia._id !== _id);
                 setAsistencias(nuevasAsistencias);
             })
             .catch((error) => {
@@ -136,7 +143,7 @@ export default function useVisualizarAFunctions() {
 
     const handleEliminarAsistencia = () => {
         if (asistenciaSeleccionada) {
-            eliminarAsistencia(asistenciaSeleccionada.matricula, asistenciaSeleccionada.fecha);
+            eliminarAsistencia(asistenciaSeleccionada._id);
             setAsistenciaSeleccionada(null);
         }
         setShowConfirmModal(false);
@@ -153,6 +160,12 @@ export default function useVisualizarAFunctions() {
     };
 
     return {
+        tipo_asistencia,
+        setTipoAsistencia,
+        fechaInicio,
+        fechaFin,
+        setFechaInicio,
+        setFechaFin,
         seleccionaFecha,
         asistencias,
         cambiarFecha,

@@ -45,7 +45,7 @@ async function crearAsistenciaIndividual(req, res) {
     await asistencia.save((error, userStorage) => {
       if (error) {
         res.status(400).send({ msg: "Error al cargar la asistencia" });
-        //console.log(error);
+        console.log(error);
       } else {
         res.status(200).send(userStorage);
       }
@@ -120,26 +120,27 @@ async function eliminarAsistencia(req, res) {
 //CONSULTOR
 //FUNCION PARA OBTENER LAS ASISTENCIAS REGISTRADAS POR EL CONSULTOR DE ACUERDO AL DIA. LA MATRICULA QUE SE ENVIA DEBE SER LA DEL CONSULTOR Y LA FECHA DEBE SER LA DEL EL DIA QUE HAYA SELECCIONADO
 async function obtenerAsistencia(req, res) {
-  const { matricula, fecha } = req.body;
-  let asistencias = [];
+  const { fechaInicio, fechaFin, tipo_asistencia } = req.body || {};
 
   try {
-    const busquedaGrupos = await Usuario.findOne({ matricula });
+    let filtro = {};
 
-    const arrayGrupos = busquedaGrupos.grupos;
-
-    for (let i = 0; i < arrayGrupos.length; i++) {
-      let busqueda = await Asistencia.find({ grupo: arrayGrupos[i], fecha });
-
-      for (let j = 0; j < busqueda.length; j++) {
-        asistencias.push(busqueda[j]);
-      }
+    if (fechaInicio && fechaFin) {
+        filtro.fecha = { 
+          $gte: new Date(fechaInicio), 
+          $lte: new Date(fechaFin) 
+        };
     }
 
+    if (tipo_asistencia) {
+      filtro.tipo_asistencia = tipo_asistencia;
+    }
+
+    const asistencias = await Asistencia.find(filtro);
     res.status(200).send(asistencias);
   } catch (error) {
+    console.error(error);
     res.status(400).send({ msg: "Error al obtener las asistencias" });
-    throw error;
   }
 }
 

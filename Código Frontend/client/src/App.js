@@ -10,7 +10,8 @@ import CrearUnicoAlumno from "./Components/AlumnosYGrupos/CrearUnicoAlumno";
 import { TablaAlumnos } from "./Components/AlumnosYGrupos/TablaAlumnos";
 import { TablaVA } from './Components/AlumnosYGrupos/TablaVA'
 import AsistenciaManual from "./Components/Asistencias/AsistenciaManual";
-import VisualizarA from "./Components/Asistencias/VisualizarA";
+//import VisualizarA from "./Components/Asistencias/VisualizarA";
+import TablaVAsistencias from "./Components/Asistencias/TablaVAsistencias";
 import CrearUnicoU from "./Components/Usuarios/CrearUnicoU";
 import Tabla from "./Components/Usuarios/Tabla";
 import TablaV from "./Components/Usuarios/TablaV";
@@ -168,7 +169,7 @@ const App = () => {
 
             {/* Asistencias */}
             <Route path="/asistencias/manual" element={<AsistenciaManual />} />
-            <Route path="/asistencias/visualizar" element={<VisualizarA />} />
+            <Route path="/asistencias/visualizar" element={<TablaVAsistencias />} />
 
             {/* Alumnos y grupos */}
             <Route path="/alumnos/crear" element={<CrearUnicoAlumno />} />
