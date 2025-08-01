@@ -26,7 +26,7 @@ api.delete(
 api.post(
   "/asistencia/buscar",
   //[authConsultor],
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.obtenerAsistencia
 );
 api.post(
@@ -79,17 +79,17 @@ api.post(
 );
 
 api.post("/asistencia/buscar/porcentaje/diario",
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.porcentajeAsistenciaDiario
 );
 api.post(
   "/asistencia/contarAsistenciaPorDia",
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.contarAsistenciaPorDia
 );
 api.post(
   "/asistencia/contarFaltasPorAlumno",
-  //[authAdmin],
+  [authAdmin],
   asistenciasController.contarFaltasPorAlumno
 );
 

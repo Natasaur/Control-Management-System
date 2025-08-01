@@ -12,7 +12,7 @@ const api = express.Router();
 api.post(
   "/usuario/crear/individual",
   //[authAdminAP],
-  //[authAdmin],
+  [authAdmin],
   usuariosController.crearUsuarioIndividual
 );
 api.post(

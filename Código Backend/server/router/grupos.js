@@ -29,11 +29,11 @@ api.patch("/grupo/desactivar",
   gruposController.desactivarGrupo);
 api.get("/grupo/buscar", 
   //[authAdminConsultorUsuario], 
-  //[authAdmin],
+  [authAdmin],
   gruposController.obtenerGrupos);
 api.post("/grupo/buscar/activos", 
   //[authConsultor], 
-  //[authAdmin],
+  [authAdmin],
   gruposController.gruposActivos);
 api.patch("/grupo/editar", 
   //[authAdminAP], 

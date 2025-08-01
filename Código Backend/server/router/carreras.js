@@ -6,7 +6,7 @@ const api = express.Router();
 
 api.get(
   "/carrera/obtenerCarreras",
-  //[authAdmin],
+  [authAdmin],
   carrerasController.obtenerCarreras,
 );
 

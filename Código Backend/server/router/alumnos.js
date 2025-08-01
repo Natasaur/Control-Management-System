@@ -41,7 +41,7 @@ api.get(
 );
 api.post(
   "/alumno/contarAsistenciaPorPlantel",
-  //[authAdmin],
+  [authAdmin],
   alumnosController.contarAlumnosPorPlantel
 );
 
