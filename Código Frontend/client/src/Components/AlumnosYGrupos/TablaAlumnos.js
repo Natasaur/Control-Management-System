@@ -24,10 +24,13 @@ export function TablaAlumnos() {
     );
     return (
         <Card>
+            <div>
+                <h3 className="text-center mb-4" style={{ backgroundColor: '#FD7E14', color: 'white', padding: '10px' }}>Cargar alumnos por un CSV</h3>
+            </div>
             <Card.Body>
-                <Card.Title>Cargar alumnos por un CSV</Card.Title>
+                <Card.Title>En esta sección, podrás cargar un archivo CSV para registrar varios alumnos a la vez.*</Card.Title>
                 <Card.Text>
-                    En esta sección, podrás cargar un archivo CSV para registrar varios alumnos a la vez.
+                    *Ingresa sólo la información del alumno. No se aceptan imágenes.
                 </Card.Text>
                 <Container className="d-flex flex-column justify-content-start h-100">
                     <div className="add-inicio mb-3">

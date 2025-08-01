@@ -474,7 +474,7 @@ async function actualizarUsuario(req, res) {
 //ADMINISTRADOR
 //FUNCION PARA OBTENER A TODOS LOS USUARIOS CON ROL DE USUARIO (ANTERIORMENTE RECTOR) REGISTRADOS
 async function obtenerUsuarios(req, res) {
-  const response = await Usuario.find({ rol: "U" });
+  const response = await Usuario.find({  });
 
   for (var i = 0; i < response.length; i++) {
     response[i].password = undefined;

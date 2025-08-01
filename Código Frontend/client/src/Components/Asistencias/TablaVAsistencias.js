@@ -47,9 +47,11 @@ export default function TablaAsistencias() {
 
     return (
         <Card>
+            <div>
+                <h3 className="text-center mb-4" style={{ backgroundColor: '#FD7E14', color: 'white', padding: '10px' }}>Asistencias</h3>
+            </div>
             <Card.Header className="d-flex justify-content-between align-items-center">
                 <div>
-                    <h3>Tabla de asistencias</h3>
                     <div className="d-flex align-items-center gap-2 mt-2">
                         <Form.Label>Fecha Inicio</Form.Label>
                         <DatePicker

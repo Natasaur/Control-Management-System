@@ -26,11 +26,11 @@ export default function CsvTabla() {
 
     return (
         <Card>
+            <div>
+                <h3 className="text-center mb-4" style={{ backgroundColor: '#FD7E14', color: 'white', padding: '10px' }}>Cargar usuarios por un CSV</h3>
+            </div>
             <Card.Body>
-                <Card.Title>Cargar usuarios por un CSV</Card.Title>
-                <Card.Text>
-                    En esta sección, podrás cargar un archivo CSV para registrar varios usuarios a la vez.
-                </Card.Text>
+                <Card.Title>En esta sección, podrás cargar un archivo CSV para registrar varios usuarios a la vez.</Card.Title>
                 <Container className="d-flex flex-column justify-content-start h-100">
                     <div className="add-inicio mb-3">
                         <div className="label-container">
