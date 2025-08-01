@@ -31,6 +31,9 @@ export default function CrearUnicoU() {
                 </Modal.Header>
                 <Modal.Body>
                  */}
+                 <div>
+                    <h3 className="text-center mb-4" style={{ backgroundColor: '#FD7E14', color: 'white', padding: '10px' }}>Registro de usuario</h3>
+                </div>
                     <form onSubmit={enviarFormulario}>
                         <div className="mb-3">
                             <label htmlFor="Matricula" className="form-label">Matrícula del usuario</label>

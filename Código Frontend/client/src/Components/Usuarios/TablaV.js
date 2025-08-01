@@ -39,8 +39,10 @@ export default function TablaV() {
 
     return (
         <Card>
+            <div>
+                <h3 className="text-center mb-4" style={{ backgroundColor: '#FD7E14', color: 'white', padding: '10px' }}>Administradores</h3>
+            </div>
             <Card.Header className="d-flex justify-content-between align-items-center">
-                <h3 className="ad">Administrador de apoyo</h3>
                 <Pagination>
                     <Pagination.Prev onClick={irAPaginaAnterior} disabled={paginaActual === 1} />
                     <Pagination.Next onClick={irAPaginaSiguiente} disabled={indiceFin >= usuario.length} />

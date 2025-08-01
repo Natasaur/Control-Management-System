@@ -151,10 +151,25 @@ export default function Calendario() {
     };
 
     useEffect(() => {
+const getFechasExistentes = async () => {
+        try {
+            const urlFB = `${BASE_PATH}${RouteFB}`;
+            const response = await axios.get(urlFB, {
+                headers: {
+                    Authorization: `${token}`,
+                },
+            });
+            setFechasExistentes(response.data);
+        } catch (error) {
+            console.log(error);
+            alert('Error al obtener las fechas existentes');
+        }
+    };
+
         if (token) {
             getFechasExistentes();
         }
-    }, []);
+    }, [token, BASE_PATH, RouteFB]);
 
     const renderizarDias = () => {
         const dias = [];

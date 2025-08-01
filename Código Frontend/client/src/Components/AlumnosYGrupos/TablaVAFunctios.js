@@ -20,10 +20,23 @@ export function useTablaVA() {
     const token = Cookies.get('token');
 
     useEffect(() => {
+        const obtenerUsuarios = async () => {
+        try {
+            const urlAT = `${BASE_PATH}${RouteAT}`;
+            const respuesta = await axios.get(urlAT, {
+                headers: {
+                    Authorization: `${token}`,
+                },
+            });
+            setUsuarios(respuesta.data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
         if (token) {
             obtenerUsuarios();
         }
-    }, []);
+    }, [token, BASE_PATH, RouteAT]);
 
     const obtenerUsuarios = async () => {
         try {

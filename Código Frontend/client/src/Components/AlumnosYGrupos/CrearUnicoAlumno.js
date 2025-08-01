@@ -15,7 +15,9 @@ export default function CrearUnicoAlumno() {
 
     return (
         <div className="container mt-4">
-            <h3>Registro de Alumno</h3>
+            <div>
+                <h3 className="text-center mb-4" style={{ backgroundColor: '#FD7E14', color: 'white', padding: '10px' }}>Registro de alumno</h3>
+            </div>
             <form onSubmit={enviarFormulario}>
                 <input
                     type="number"
