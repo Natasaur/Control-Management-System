@@ -20,6 +20,10 @@ export default function useVisualizarAFunctions() {
     const [fechaInicio, setFechaInicio] = useState(null);
     const [fechaFin, setFechaFin] = useState(null);
     const [tipo_asistencia, setTipoAsistencia] = useState('');
+    const [grupo, setGrupo] = useState('');
+    const [matricula, setMatricula] = useState('');
+    const [grupos, setGrupos] = useState([]);
+    const [alumnos, setAlumnos] = useState([]);
 
     const cambiarFecha = (date) => {
         setSeleccionarFecha(date);
@@ -35,9 +39,42 @@ export default function useVisualizarAFunctions() {
         />
     ));
 
-    useEffect(() => {
+   useEffect(() => {
         let isMounted = true;
         if (!token) return;
+
+        const fetchGruposYAlumnos = async () => {
+            try {
+                const gruposRes = await axios.post(
+                    `${BASE_PATH}/API/v1/grupo/buscar/activos`,
+                    { plantel: "TODOS" },
+                    {
+                        headers: {
+                            Authorization: `${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+                if (isMounted) setGrupos(gruposRes.data);
+            } catch (error) {
+                console.error("Error al cargar grupos:", error);
+            }
+
+            try {
+                const alumnosRes = await axios.get(
+                    `${BASE_PATH}/API/v1/alumno/todos`,
+                    {
+                        headers: {
+                            Authorization: `${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    }
+                );
+                if (isMounted) setAlumnos(alumnosRes.data);
+            } catch (error) {
+                console.error("Error al cargar alumnos:", error);
+            }
+        };
 
         const fetchAsistencias = async () => {
             setIsLoading(true);
@@ -62,13 +99,14 @@ export default function useVisualizarAFunctions() {
         };
 
         fetchAsistencias();
+        fetchGruposYAlumnos();
 
         return () => {
             isMounted = false;
         };
-    }, [token]);
+    }, [token, BASE_PATH, RouteAB]);
 
-    const obtenerAsistencias = async ({ fechaInicio, fechaFin, tipo_asistencia }) => {
+    const obtenerAsistencias = async ({ fechaInicio, fechaFin, tipo_asistencia, grupo, matricula }) => {
         if (!token) {
             setIsLoading(false);
             return;
@@ -81,6 +119,8 @@ export default function useVisualizarAFunctions() {
         if (fechaInicio) data.fechaInicio = format(fechaInicio, 'yyyy-MM-dd');
         if (fechaFin) data.fechaFin = format(fechaFin, 'yyyy-MM-dd');
         if (tipo_asistencia) data.tipo_asistencia = tipo_asistencia;
+        if (grupo) data.grupo = grupo;
+        if (matricula) data.matricula = matricula;
 
         try {
             const response = await axios.post(urlAB, data, {
@@ -160,6 +200,12 @@ export default function useVisualizarAFunctions() {
     };
 
     return {
+        grupos,
+        alumnos,
+        matricula,
+        setMatricula,
+        grupo,
+        setGrupo,
         tipo_asistencia,
         setTipoAsistencia,
         fechaInicio,

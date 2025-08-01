@@ -6,26 +6,43 @@ import useVisualizarAFunctions from './VisualizarAFunctions';
 import { format } from 'date-fns';
 
 export default function TablaAsistencias() {
+
+    const formatearFecha = (fecha) => {
+    if (!fecha) return '';
+        try {
+            return format(new Date(fecha), 'yyyy-MM-dd');
+        } catch (error) {
+            console.warn('Fecha inválida detectada:', fecha);
+            return '';
+        }
+    };
+
     const {
-         tipo_asistencia,
-         setTipoAsistencia,
-         fechaInicio,
-         fechaFin,
-         setFechaInicio,
-         setFechaFin,
-         asistencias,
-         elementosActuales,
-         irAPaginaAnterior,
-         irAPaginaSiguiente,
-         paginaActual,
-         indiceUltimoElemento,
-         showConfirmModal,
-         handleEliminarAsistencia,
-         handleCerrarModal,
-         handleMostrarConfirmModal,
-         mensajeEliminacion,
-         obtenerAsistencias,
-         isLoading
+        grupos,
+        alumnos,
+        matricula,
+        setMatricula,
+        grupo,
+        setGrupo,
+        tipo_asistencia,
+        setTipoAsistencia,
+        fechaInicio,
+        fechaFin,
+        setFechaInicio,
+        setFechaFin,
+        asistencias,
+        elementosActuales,
+        irAPaginaAnterior,
+        irAPaginaSiguiente,
+        paginaActual,
+        indiceUltimoElemento,
+        showConfirmModal,
+        handleEliminarAsistencia,
+        handleCerrarModal,
+        handleMostrarConfirmModal,
+        mensajeEliminacion,
+        obtenerAsistencias,
+        isLoading
    } = useVisualizarAFunctions();
 
     return (
@@ -58,7 +75,30 @@ export default function TablaAsistencias() {
                            <option value="normal">Normal</option>
                            <option value="justificada">Justificada</option>
                         </Form.Select>
-                        <Button onClick={ () => obtenerAsistencias({ fechaInicio, fechaFin, tipo_asistencia })}>Filtrar</Button>
+                        <Form.Select
+                            value={grupo}
+                            onChange={(e) => setGrupo(e.target.value)}
+                        >
+                            <option value="">Todos los grupos</option>
+                            {grupos.map((g) => (
+                                <option key={g._id} value={g.nombre}>
+                                    {g.nombre}
+                                </option>
+                            ))}
+                        </Form.Select>
+
+                        <Form.Select
+                            value={matricula}
+                            onChange={(e) => setMatricula(e.target.value)}
+                        >
+                            <option value="">Todas las matrículas</option>
+                            {alumnos.map((a) => (
+                                <option key={a._id} value={a.matricula}>
+                                    {a.matricula} - {a.nombre}
+                                </option>
+                            ))}
+                        </Form.Select>
+                        <Button onClick={ () => obtenerAsistencias({ fechaInicio, fechaFin, tipo_asistencia, grupo, matricula })}>Filtrar</Button>
                         {isLoading && <Spinner animation="border" variant="primary" size="sm" className="ml-2" />}
                     </div>
                 </div>
@@ -113,7 +153,7 @@ export default function TablaAsistencias() {
                                         <td>{asistencia.matricula}</td>
                                         <td>{asistencia.grupo}</td>
                                         <td>{asistencia.ciclo_escolar}</td>
-                                        <td>{format(new Date(asistencia.fecha), 'yyyy-MM-dd')}</td>
+                                        <td>{formatearFecha(asistencia.fecha)}</td>
                                         <td>{asistencia.tipo_asistencia}</td>
                                         <td>
                                             <Button

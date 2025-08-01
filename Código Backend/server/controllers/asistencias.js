@@ -120,7 +120,7 @@ async function eliminarAsistencia(req, res) {
 //CONSULTOR
 //FUNCION PARA OBTENER LAS ASISTENCIAS REGISTRADAS POR EL CONSULTOR DE ACUERDO AL DIA. LA MATRICULA QUE SE ENVIA DEBE SER LA DEL CONSULTOR Y LA FECHA DEBE SER LA DEL EL DIA QUE HAYA SELECCIONADO
 async function obtenerAsistencia(req, res) {
-  const { fechaInicio, fechaFin, tipo_asistencia } = req.body || {};
+  const { fechaInicio, fechaFin, tipo_asistencia, grupo, matricula } = req.body || {};
 
   try {
     let filtro = {};
@@ -134,6 +134,12 @@ async function obtenerAsistencia(req, res) {
 
     if (tipo_asistencia) {
       filtro.tipo_asistencia = tipo_asistencia;
+    }
+    if (grupo) {
+      filtro.grupo = grupo;
+    }
+    if (matricula) {
+      filtro.matricula = matricula;
     }
 
     const asistencias = await Asistencia.find(filtro);
