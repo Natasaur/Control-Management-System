@@ -11,38 +11,40 @@ const api = express.Router();
 api.post(
   "/alumno/crear/individual",
   upload.single("imagen"),
-  [authAdmin],
+  //[authAdmin],
   alumnosController.crearAlumnoIndividual
 );
 api.post(
   "/alumno/crear/lista",
-  [authAdmin],
+  //[authAdmin],
   alumnosController.crearListaAlumnos
 );
 api.delete(
   "/alumno/eliminar/:matricula",
-  [authAdmin],
+  //[authAdmin],
   alumnosController.borrarAlumno
 );
 api.patch(
   "/alumno/actualizar",
-  [authAdmin],
+  //[authAdmin],
   alumnosController.actualizarAlumno
 );
 api.get(
   "/alumno/todos",
-  [authAdmin],
+  //[authAdmin],
   alumnosController.obtenerAlumnos
 );
 api.get(
   "/alumno/:matricula",
-  [authAdmin],
+  //[authAdmin],
   alumnosController.obtenerUnicoAlumno
 );
 api.post(
   "/alumno/contarAsistenciaPorPlantel",
-  [authAdmin],
+  //[authAdmin],
   alumnosController.contarAlumnosPorPlantel
 );
+api.post("/alumno/porGrupo", alumnosController.obtenerPorGrupo);
+
 
 module.exports = api;

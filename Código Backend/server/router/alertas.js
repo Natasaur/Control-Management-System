@@ -7,8 +7,10 @@ const api = express.Router();
 
 api.post("/alertas/plantel", 
    //[authUsuario], 
-   [authAdmin],
+   //[authAdmin],
    alertasController.alertaPlantel);
-api.post("/alertas/plantel", [authAdmin], alertasController.alertaPlantel);
+api.post("/alertas/plantel", 
+   //[authAdmin], 
+   alertasController.alertaPlantel);
 
 module.exports = api;

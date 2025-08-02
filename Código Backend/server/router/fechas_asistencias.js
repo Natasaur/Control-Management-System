@@ -7,15 +7,15 @@ const api = express.Router();
 
 api.post("/fecha/crear", 
    //[authAdminAP],
-   [authAdmin],
+   //[authAdmin],
    fechasController.crearFechas);
 api.get("/fecha/buscar", 
    //[authAdminAP], 
-   [authAdmin],
+   //[authAdmin],
    fechasController.obtenerFechas);
 api.delete("/fecha/eliminar", 
    //[authAdminAP], 
-   [authAdmin],
+   //[authAdmin],
    fechasController.eliminarFechas);
 
 module.exports = api;

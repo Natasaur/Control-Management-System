@@ -8,36 +8,36 @@ const api = express.Router();
 api.post(
   "/grupo/crear/individual",
   //[authAdminAP],
-  [authAdmin],
+  //[authAdmin],
   gruposController.crearGrupoIndividual
 );
 api.post("/grupo/crear/lista", 
   //[authAdminAP], 
-  [authAdmin],
+  //[authAdmin],
   gruposController.crearListaGrupo);
 api.delete("/grupo/eliminar", 
   //[authAdminAP], 
-  [authAdmin],
+  //[authAdmin],
   gruposController.eliminarGrupo);
 api.patch("/grupo/activar", 
   //[authAdminAP], 
-  [authAdmin],
+  //[authAdmin],
   gruposController.activarGrupo);
 api.patch("/grupo/desactivar", 
   //[authAdminAP], 
-  [authAdmin],
+  //[authAdmin],
   gruposController.desactivarGrupo);
 api.get("/grupo/buscar", 
   //[authAdminConsultorUsuario], 
-  [authAdmin],
+  //[authAdmin],
   gruposController.obtenerGrupos);
 api.post("/grupo/buscar/activos", 
   //[authConsultor], 
-  [authAdmin],
+  //[authAdmin],
   gruposController.gruposActivos);
 api.patch("/grupo/editar", 
   //[authAdminAP], 
-  [authAdmin],
+  //[authAdmin],
   gruposController.editarGrupo);
 
 module.exports = api;

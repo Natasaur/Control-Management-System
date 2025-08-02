@@ -40,7 +40,7 @@ async function eliminarGrupo(req, res) {
   const { grupo } = req.body;
 
   try {
-    const grupoEliminado = await Grupos.findOneAndDelete({ grupo });
+    const grupoEliminado = await Grupo.findOneAndDelete({ grupo });
 
     if (!grupoEliminado) {
       res.status(400).send({ msg: "Error al eliminar el grupo" });
@@ -58,7 +58,7 @@ async function activarGrupo(req, res) {
   const { grupo } = req.body;
 
   try {
-    const grupoActualizado = await Grupos.findOneAndUpdate(
+    const grupoActualizado = await Grupo.findOneAndUpdate(
       { grupo },
       { disponible: true },
       { new: true }
@@ -87,7 +87,7 @@ async function desactivarGrupo(req, res) {
   const { grupo } = req.body;
 
   try {
-    const grupoActualizado = await Grupos.findOneAndUpdate(
+    const grupoActualizado = await Grupo.findOneAndUpdate(
       { grupo },
       { disponible: false },
       { new: true }
@@ -110,7 +110,7 @@ async function desactivarGrupo(req, res) {
 //FUNCION PARA EL ADMINISTRADOR
 async function obtenerGrupos(req, res) {
   try {
-    const response = await Grupos.find();
+    const response = await Grupo.find();
     res.status(200).send(response);
   } catch (error) {
     console.error("Error al buscar los grupos:", error);
@@ -149,7 +149,7 @@ async function gruposActivos(req, res) {
 async function editarGrupo(req, res) {
   const { grupo, nuevoGrupo } = req.body;
 
-  const grupoActualizado = await Grupos.findOneAndUpdate(
+  const grupoActualizado = await Grupo.findOneAndUpdate(
     { grupo },
     {
       $set: {

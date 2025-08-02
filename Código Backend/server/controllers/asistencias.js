@@ -1,12 +1,13 @@
-const Asistencia = require("../models/asistencias");
-const Usuario = require("../models/usuarios");
-const Fechas_asistencias = require("../models/fechas_asistencias");
-const Alumno = require("../models/alumnos");
-const Plantel = require("../models/planteles");
-const Carrera = require("../models/carreras")
-const DiasNoLaborables = require("../models/dias_no_laborables");
-const moment = require("moment"); // o Date si no quieres librerías
+// Importación de modelos de la base de datos y librerías necesarias
 
+const Asistencia = require("../models/asistencias"); // Modelo que representa los registros de asistencias de los alumnos
+const Usuario = require("../models/usuarios"); // Modelo para los usuarios del sistema (administradores, consultores, etc.)
+const Fechas_asistencias = require("../models/fechas_asistencias"); // Modelo para las fechas programadas de asistencia
+const Alumno = require("../models/alumnos"); // Modelo que representa a los alumnos
+const Plantel = require("../models/planteles"); // Modelo que representa los planteles escolares (sedes o campus)
+const Carrera = require("../models/carreras"); // Modelo que representa las carreras o programas académicos
+const DiasNoLaborables = require("../models/dias_no_laborables"); // Modelo que contiene días festivos o no laborables definidos
+const moment = require("moment"); // Librería para el manejo y manipulación de fechas y horas (puede usarse como alternativa a Date)
 
 
 //CONSULTOR
@@ -63,14 +64,14 @@ async function crearAsistenciaIndividual(req, res) {
 async function crearListaAsistencias(req, res) {
   const asistenciasArray = req.body;
 
-  //VARIABLES PARA PODER GUARDAR FECHAS Y MATRICULAS Y COMPROBAR QUE NO HAYAN ASISTENCIAS DUPLICADAS
   let matriculasArray = [];
   let fechasArray = [];
-
+  
   for (var i = 0; i < asistenciasArray.length; i++) {
     matriculasArray.push(asistenciasArray[i].matricula);
     fechasArray.push(asistenciasArray[i].fecha);
   }
+  //VARIABLES PARA PODER GUARDAR FECHAS Y MATRICULAS Y COMPROBAR QUE NO HAYAN ASISTENCIAS DUPLICADAS
 
   const registroDuplicados = await Asistencia.find({
     matricula: { $in: matriculasArray },
@@ -1089,6 +1090,32 @@ function generarFechas(fechaInicio, fechaFin) {
   return fechas;
 }
 
+const filtrarPorGrupo = async (req, res) => {
+  console.log("Datos recibidos en backend:", req.body);
+  try {
+    const { grupo, fechaInicio, fechaFin } = req.body;
+
+    if (!grupo) {
+      return res.status(400).json({ error: "El grupo es obligatorio." });
+    }
+
+    const filtro = { grupo };
+
+    if (fechaInicio && fechaFin) {
+      filtro.fecha = {
+        $gte: new Date(fechaInicio),
+        $lte: new Date(fechaFin)
+      };
+    }
+
+    const asistencias = await Asistencia.find(filtro);
+    res.status(200).json(asistencias);
+  } catch (error) {
+    console.error("Error al filtrar asistencias:", error);
+    res.status(500).json({ error: "Error al filtrar asistencias por grupo." });
+  }
+};
+
 module.exports = {
   crearAsistenciaIndividual,
   crearListaAsistencias,
@@ -1106,4 +1133,5 @@ module.exports = {
   alumnosConFaltas,
   contarAsistenciaPorDia,
   contarFaltasPorAlumno,
+  filtrarPorGrupo,
 };

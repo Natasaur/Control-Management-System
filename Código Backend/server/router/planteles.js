@@ -6,7 +6,7 @@ const api = express.Router();
 
 api.get(
   "/plantel/obtenerPlanteles",
-  [authAdmin],
+  //[authAdmin],
   plantelesController.obtenerPlanteles,
 );
 

@@ -2,12 +2,13 @@ import { useState, useEffect, forwardRef } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { format } from 'date-fns';
+import { parseISO, format, isValid } from "date-fns";
 import { ENV } from '../../utils/Constants';
+
 
 export default function useVisualizarAFunctions() {
     const BASE_PATH = ENV.BASE_PATH;
-    const RouteAB = ENV.API_ROUTES.PuEkEqdgECgyKaFyquPDFhpuVkDMYFIyx0nHCnpmzCBV9NMeZOA;
+    const RouteAB = "/grupo/buscar";
     const RouteAE = ENV.API_ROUTES.X68nbSAEMV6KkoeQkkwayOn7aA4OzE2T0hLyCqOxsZHcgxEPwtEA;
     const [seleccionaFecha, setSeleccionarFecha] = useState(null);
     const [asistencias, setAsistencias] = useState([]);
@@ -24,6 +25,8 @@ export default function useVisualizarAFunctions() {
     const [matricula, setMatricula] = useState('');
     const [grupos, setGrupos] = useState([]);
     const [alumnos, setAlumnos] = useState([]);
+    const [filtroAplicado, setFiltroAplicado] = useState(false);
+
 
     const cambiarFecha = (date) => {
         setSeleccionarFecha(date);
@@ -45,43 +48,34 @@ export default function useVisualizarAFunctions() {
 
         const fetchGruposYAlumnos = async () => {
             try {
-                const gruposRes = await axios.post(
-                    `${BASE_PATH}/API/v1/grupo/buscar/activos`,
-                    { plantel: "TODOS" },
-                    {
+                const token = localStorage.getItem('token');
+                const [gruposRes, alumnosRes] = await Promise.all([
+                    axios.get(`${BASE_PATH}/grupo/buscar`, {
                         headers: {
                             Authorization: `${token}`,
                             'Content-Type': 'application/json',
                         },
-                    }
-                );
-                if (isMounted) setGrupos(gruposRes.data);
-            } catch (error) {
-                console.error("Error al cargar grupos:", error);
-            }
-
-            try {
-                const alumnosRes = await axios.get(
-                    `${BASE_PATH}/API/v1/alumno/todos`,
-                    {
+                    }),
+                    axios.get(`${BASE_PATH}/alumno/todos`, {
                         headers: {
                             Authorization: `${token}`,
                             'Content-Type': 'application/json',
                         },
-                    }
-                );
-                if (isMounted) setAlumnos(alumnosRes.data);
+                    }),
+                ]);
+                setGrupos(gruposRes.data);     // ← Esto llena tu select
+                setAlumnos(alumnosRes.data);
             } catch (error) {
-                console.error("Error al cargar alumnos:", error);
+                console.error('Error al obtener grupos y alumnos:', error);
             }
         };
 
         const fetchAsistencias = async () => {
             setIsLoading(true);
-            const urlAB = `${BASE_PATH}${RouteAB}`;
+            const urlAB = `${BASE_PATH}/grupo/buscar`;
 
             try {
-                const response = await axios.post(urlAB, {}, {
+                const response = await axios.get(urlAB, {}, {
                     headers: {
                         Authorization: `${token}`,
                         'Content-Type': 'application/json',
@@ -106,24 +100,35 @@ export default function useVisualizarAFunctions() {
         };
     }, [token, BASE_PATH, RouteAB]);
 
-    const obtenerAsistencias = async ({ fechaInicio, fechaFin, tipo_asistencia, grupo, matricula }) => {
+    const obtenerAsistencias = async ({ fechaInicio, fechaFin, grupo }) => {
         if (!token) {
             setIsLoading(false);
             return;
         }
 
         setIsLoading(true);
-        const urlAB = `${BASE_PATH}${RouteAB}`;
         const data = {};
 
-        if (fechaInicio) data.fechaInicio = format(fechaInicio, 'yyyy-MM-dd');
-        if (fechaFin) data.fechaFin = format(fechaFin, 'yyyy-MM-dd');
-        if (tipo_asistencia) data.tipo_asistencia = tipo_asistencia;
+        // Validar y formatear fechaInicio
+        if (fechaInicio) {
+            const parsedInicio = parseISO(fechaInicio);
+            if (isValid(parsedInicio)) {
+                data.fechaInicio = parsedInicio.toISOString();
+            }
+        }
+
+        // Validar y formatear fechaFin
+        if (fechaFin) {
+            const parsedFin = parseISO(fechaFin);
+            if (isValid(parsedFin)) {
+                data.fechaFin = parsedFin.toISOString();
+            }
+        }
+
         if (grupo) data.grupo = grupo;
-        if (matricula) data.matricula = matricula;
 
         try {
-            const response = await axios.post(urlAB, data, {
+            const response = await axios.post(`${BASE_PATH}/asistencia/filtrarPorGrupo`, data, {
                 headers: {
                     Authorization: `${token}`,
                     'Content-Type': 'application/json',
@@ -131,10 +136,20 @@ export default function useVisualizarAFunctions() {
             });
             setAsistencias(response.data);
             setPaginaActual(1);
+            setFiltroAplicado(true); // ✅ Añadir esta línea
         } catch (error) {
             console.error(error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const obtenerAlumnosPorGrupo = async (grupoSeleccionado) => {
+        try {
+            const res = await axios.post(`${BASE_PATH}/alumno/porGrupo`, { grupo: grupoSeleccionado });
+            setAlumnos(res.data);  // Esto actualizará automáticamente el useMemo de TablaAsistencias.jsx
+        } catch (error) {
+            console.error("Error al obtener alumnos por grupo:", error);
         }
     };
 
@@ -200,6 +215,7 @@ export default function useVisualizarAFunctions() {
     };
 
     return {
+        filtroAplicado,
         grupos,
         alumnos,
         matricula,
@@ -226,6 +242,7 @@ export default function useVisualizarAFunctions() {
         handleCerrarModal,
         handleMostrarConfirmModal,
         seleccionarInput,
-        isLoading 
+        isLoading,
+        obtenerAlumnosPorGrupo,
     };
 }
