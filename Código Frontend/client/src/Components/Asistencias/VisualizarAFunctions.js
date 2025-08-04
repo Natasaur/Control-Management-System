@@ -2,7 +2,7 @@ import { useState, useEffect, forwardRef } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { parseISO, format, isValid } from "date-fns";
+import { parseISO, isValid } from "date-fns";
 import { ENV } from '../../utils/Constants';
 
 
@@ -210,6 +210,11 @@ export default function useVisualizarAFunctions() {
     };
 
     const handleMostrarConfirmModal = (asistencia) => {
+        if (!asistencia.justificada) {
+            alert("Solo puedes eliminar asistencias justificadas.");
+            return;
+        }
+
         setAsistenciaSeleccionada(asistencia);
         setShowConfirmModal(true);
     };

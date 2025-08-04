@@ -93,6 +93,8 @@ api.post(
   asistenciasController.contarFaltasPorAlumno
 );
 api.post("/asistencia/filtrarPorGrupo", asistenciasController.filtrarPorGrupo);
-
+api.get("/asistencia/obtenerJustificadas",
+  asistenciasController.obtenerJustificadas
+);
 
 module.exports = api;

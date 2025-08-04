@@ -45,6 +45,9 @@ export default function MainLayout({ setIsAuthenticated }) {
                 <NavDropdown.Item as={Link} to="/asistencias/visualizar">
                   Visualizar Asistencias
                 </NavDropdown.Item>
+                <NavDropdown.Item as={Link} to="/asistencias/eliminar">
+                  Eliminar Asistencia
+                </NavDropdown.Item>
               </NavDropdown>
 
               {/* Alumnos */}
