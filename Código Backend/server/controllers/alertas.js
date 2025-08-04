@@ -1,80 +1,78 @@
-// Importación de los modelos necesarios
-const Alertas = require("../models/alertas");
-const Fechas_asistencias = require("../models/fechas_asistencias");
 const Asistencia = require("../models/asistencias");
 const Alumno = require("../models/alumnos");
 
-// Función principal para generar alertas de asistencia por plantel
-async function alertaPlantel(req, res) {
-  // Se obtienen los datos del cuerpo de la petición
-  const { semana, plantel } = req.body;
+async function alertasPorRango(req, res) {
+  try {
+    const { fechaInicio, fechaFin, plantel } = req.body;
 
-  // Se buscan todas las fechas de asistencia correspondientes a la semana dada
-  const fechas = await Fechas_asistencias.find({ semana });
-  const fechasLargo = fechas.length;
-  const arrayFechas = [];
-
-  // Se extraen únicamente las fechas en un arreglo
-  for (let i = 0; i < fechasLargo; i++) {
-    arrayFechas.push(fechas[i].fecha);
-  }
-
-  // Se obtienen todos los alumnos
-  const alumnos = await Alumno.find();
-  let alumnosPlantel = [];     // Alumnos que pertenecen al plantel indicado
-  let alumnosMatricula = [];   // Matrículas de los alumnos del plantel
-
-  // Se filtran los alumnos que pertenecen al plantel especificado
-  for (let j = 0; j < alumnos.length; j++) {
-    switch (alumnos[j].grupo[1]) {
-      case plantel:
-        alumnosPlantel.push(alumnos[j]);
-        alumnosMatricula.push(alumnos[j].matricula);
-        break;
+    if (!fechaInicio || !fechaFin) {
+      return res.status(400).json({ message: "Fecha inicio y fecha fin son requeridas" });
     }
-  }
 
-  // Se buscan las asistencias de los alumnos del plantel en las fechas de la semana
-  const asistenciasAlumnos = await Asistencia.find({
-    matricula: { $in: alumnosMatricula },
-    fecha: { $in: arrayFechas },
-  });
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
 
-  // Se asignan las fechas asistidas a cada alumno
-  for (let k = 0; k < alumnosPlantel.length; k++) {
-    for (let l = 0; l < asistenciasAlumnos.length; l++) {
-      if (alumnosPlantel[k].matricula === asistenciasAlumnos[l].matricula) {
-        alumnosPlantel[k].asistencias.push(asistenciasAlumnos[l].fecha);
+    // Filtro para alumnos según plantel (segunda letra del grupo)
+    let filtroAlumnos = {};
+    if (plantel) {
+      filtroAlumnos.grupo = { $regex: `^.${plantel}` };
+    }
+
+    // Seleccionar solo campos necesarios (incluyendo apellidos y contacto)
+    const alumnos = await Alumno.find(filtroAlumnos).select(
+      "matricula nombre apellido_paterno apellido_materno grupo contacto"
+    );
+
+    // Generar array con todas las fechas entre inicio y fin (string YYYY-MM-DD)
+    const diasTotales = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+    const fechasEsperadas = Array.from({ length: diasTotales }, (_, i) => {
+      const fecha = new Date(inicio);
+      fecha.setDate(fecha.getDate() + i);
+      return fecha.toISOString().split("T")[0];
+    });
+
+    // Obtener asistencias dentro del rango para las matrículas filtradas
+    const asistencias = await Asistencia.find({
+      matricula: { $in: alumnos.map(a => a.matricula) },
+      fecha: { $gte: inicio, $lte: fin }
+    });
+
+    // Agrupar las fechas en que el alumno asistió
+    const asistenciasPorAlumno = {};
+    asistencias.forEach(a => {
+      const fechaStr = a.fecha.toISOString().split("T")[0];
+      if (!asistenciasPorAlumno[a.matricula]) {
+        asistenciasPorAlumno[a.matricula] = new Set();
       }
-    }
+      asistenciasPorAlumno[a.matricula].add(fechaStr);
+    });
+
+    // Construir alertas: alumnos con 3 o más faltas (fechas esperadas - fechas asistidas)
+    const alertas = alumnos.map(alumno => {
+      const fechasAsistidas = asistenciasPorAlumno[alumno.matricula] || new Set();
+      const fechasFaltantes = fechasEsperadas.filter(f => !fechasAsistidas.has(f));
+      const numeroFaltas = fechasFaltantes.length;
+
+      if (numeroFaltas >= 3) {
+        return {
+          matricula: alumno.matricula,
+          nombre: alumno.nombre,
+          apellido_paterno: alumno.apellido_paterno,
+          apellido_materno: alumno.apellido_materno,
+          grupo: alumno.grupo,
+          contacto: alumno.contacto || "",
+          numero_faltas: numeroFaltas,
+          fechas_faltantes: fechasFaltantes
+        };
+      }
+      return null;
+    }).filter(Boolean);
+
+    return res.status(200).json(alertas);
+  } catch (error) {
+    console.error("Error en alertasPorRango:", error);
+    return res.status(500).json({ message: "Error al obtener alertas" });
   }
-
-  const alertas = [];
-
-  // Se genera una alerta si el alumno faltó más de una vez en la semana
-  for (let m = 0; m < alumnosPlantel.length; m++) {
-    if (fechasLargo - alumnosPlantel[m].asistencias.length > 1) {
-      let alerta = {
-        matricula: alumnosPlantel[m].matricula,
-        nombre: alumnosPlantel[m].nombre,
-        apellido_paterno: alumnosPlantel[m].apellido_paterno,
-        apellido_materno: alumnosPlantel[m].apellido_materno,
-        grupo: alumnosPlantel[m].grupo,
-        contacto: alumnosPlantel[m].contacto,
-        semana,
-        fechas_asistencias: arrayFechas,
-        fechas_asistidas: alumnosPlantel[m].asistencias,
-      };
-
-      alertas.push(alerta);
-    }
-  }
-
-  // Se envían las alertas como respuesta
-  res.status(200).send(alertas);
 }
 
-// Exportación de la función para su uso en otros archivos
-module.exports = {
-  alertaPlantel,
-};
+module.exports = { alertasPorRango };
