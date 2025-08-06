@@ -59,7 +59,7 @@ export default function Dashboard() {
   const [grupos, setGrupos] = useState([]);
 
   const chartColors = [
-    "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40",
+    "#FF9F40", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF6384",
     "#C9CBCF", "#5A8DEE", "#39DA8A", "#FDAC41", "#FF5B5C", "#00CFDD"
   ];
 
@@ -337,7 +337,9 @@ export default function Dashboard() {
 
   return (
     <>
-      <h2 className="mb-4">Dashboard General</h2>
+      <div>
+          <h3 className="text-center mb-4" style={{ backgroundColor: '#FD7E14', color: 'white', padding: '10px' }}>Dashboard General</h3>
+      </div>
       <Row>
         <Col md={3}>
           <Card>

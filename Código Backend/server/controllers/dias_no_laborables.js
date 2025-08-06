@@ -8,14 +8,22 @@ async function crearDiaNoLaborable(req, res) {
       return res.status(400).json({ message: "Faltan campos requeridos." });
     }
 
-    const existente = await DiaNoLaborable.findOne({ fecha: new Date(fecha), modalidad });
+    const startOfDay = new Date(fecha);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(fecha);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existente = await DiaNoLaborable.findOne({
+      fecha: { $gte: startOfDay, $lte: endOfDay },
+      modalidad,
+    });
 
     if (existente) {
       return res.status(400).json({ message: "Ya existe un día no laborable con esa fecha y modalidad." });
     }
 
     const nuevoDia = new DiaNoLaborable({
-      fecha: new Date(fecha),
+      fecha: startOfDay,
       modalidad,
       motivo,
     });
@@ -34,7 +42,10 @@ async function obtenerDiasNoLaborables(req, res) {
 
     const filtro = {};
     if (fechaInicio && fechaFin) {
-      filtro.fecha = { $gte: new Date(fechaInicio), $lte: new Date(fechaFin) };
+      filtro.fecha = {
+        $gte: new Date(fechaInicio),
+        $lte: new Date(fechaFin),
+      };
     }
     if (modalidad) {
       filtro.modalidad = modalidad;

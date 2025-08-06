@@ -48,16 +48,16 @@ const Alertas = () => {
                     <div className="col-md-6">
                         <Form.Select value={plantelSeleccionado} onChange={e => setPlantelSeleccionado(e.target.value)}>
                             <option value="">Seleccionar plantel</option>
-                            <option value="A">Atizapán</option>
-                            <option value="E">Ecatepec</option>
+                            <option value="A">ATIZAPAN</option>
+                            <option value="E">ECATEPEC</option>
                             <option value="V">HAVRE</option>
-                            <option value="X">Ixtapaluca</option>
-                            <option value="I">Iztapalapa</option>
-                            <option value="R">Los Reyes</option>
+                            <option value="X">IXTAPALUCA</option>
+                            <option value="I">IZTAPALAPA</option>
+                            <option value="R">LOS REYES</option>
                             <option value="N">NEZA</option>
-                            <option value="T">Toluca</option>
-                            <option value="S">Toreo</option>
-                            <option value="Z">Zona Rosa</option>
+                            <option value="T">TOLUCA</option>
+                            <option value="S">TOREO</option>
+                            <option value="Z">ZONA ROSA</option>
                             <option value="C">COACALCO</option>
                             <option value="U">CUAUTITLAN</option>
                             <option value="H">CHALCO</option>

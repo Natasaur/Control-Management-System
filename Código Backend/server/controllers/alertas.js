@@ -1,5 +1,7 @@
 const Asistencia = require("../models/asistencias");
 const Alumno = require("../models/alumnos");
+const DiasNoLaborables = require("../models/dias_no_laborables");
+const moment = require('moment');
 
 async function alertasPorRango(req, res) {
   try {
@@ -9,48 +11,63 @@ async function alertasPorRango(req, res) {
       return res.status(400).json({ message: "Fecha inicio y fecha fin son requeridas" });
     }
 
-    const inicio = new Date(fechaInicio);
-    const fin = new Date(fechaFin);
+    const inicio = moment(fechaInicio).startOf('day');
+    const fin = moment(fechaFin).endOf('day');
 
-    // Filtro para alumnos según plantel (segunda letra del grupo)
+    // Filtro por plantel (segunda letra del grupo)
     let filtroAlumnos = {};
     if (plantel) {
       filtroAlumnos.grupo = { $regex: `^.${plantel}` };
     }
 
-    // Seleccionar solo campos necesarios (incluyendo apellidos y contacto)
     const alumnos = await Alumno.find(filtroAlumnos).select(
       "matricula nombre apellido_paterno apellido_materno grupo contacto"
     );
 
-    // Generar array con todas las fechas entre inicio y fin (string YYYY-MM-DD)
-    const diasTotales = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
-    const fechasEsperadas = Array.from({ length: diasTotales }, (_, i) => {
-      const fecha = new Date(inicio);
-      fecha.setDate(fecha.getDate() + i);
-      return fecha.toISOString().split("T")[0];
+    const totalDias = fin.diff(inicio, 'days') + 1;
+
+    // Generar todas las fechas hábiles (lunes a viernes)
+    let fechasEsperadas = [];
+    for (let i = 0; i < totalDias; i++) {
+      const fecha = moment(inicio).add(i, 'days');
+      const dia = fecha.day(); // 0 = domingo, 6 = sábado
+      if (dia >= 1 && dia <= 5) {
+        fechasEsperadas.push(fecha.format("YYYY-MM-DD"));
+      }
+    }
+
+    // Excluir días no laborables registrados
+    const diasNoLaborables = await DiasNoLaborables.find({
+      fecha: {
+        $gte: inicio.toDate(),
+        $lte: fin.toDate()
+      }
     });
 
-    // Obtener asistencias dentro del rango para las matrículas filtradas
+    const fechasNoLaborables = diasNoLaborables.map(d => moment(d.fecha).format("YYYY-MM-DD"));
+
+    fechasEsperadas = fechasEsperadas.filter(f => !fechasNoLaborables.includes(f));
+
+    // Obtener asistencias registradas en el rango
     const asistencias = await Asistencia.find({
       matricula: { $in: alumnos.map(a => a.matricula) },
-      fecha: { $gte: inicio, $lte: fin }
+      fecha: { $gte: inicio.toDate(), $lte: fin.toDate() }
     });
 
-    // Agrupar las fechas en que el alumno asistió
+    // Agrupar por alumno
     const asistenciasPorAlumno = {};
     asistencias.forEach(a => {
-      const fechaStr = a.fecha.toISOString().split("T")[0];
+      const fechaStr = moment(a.fecha).format("YYYY-MM-DD");
       if (!asistenciasPorAlumno[a.matricula]) {
         asistenciasPorAlumno[a.matricula] = new Set();
       }
       asistenciasPorAlumno[a.matricula].add(fechaStr);
     });
 
-    // Construir alertas: alumnos con 3 o más faltas (fechas esperadas - fechas asistidas)
+    // Generar alertas
     const alertas = alumnos.map(alumno => {
-      const fechasAsistidas = asistenciasPorAlumno[alumno.matricula] || new Set();
-      const fechasFaltantes = fechasEsperadas.filter(f => !fechasAsistidas.has(f));
+      const asistidas = asistenciasPorAlumno[alumno.matricula] || new Set();
+      const fechasFaltantes = fechasEsperadas.filter(f => !asistidas.has(f));
       const numeroFaltas = fechasFaltantes.length;
 
       if (numeroFaltas >= 3) {
