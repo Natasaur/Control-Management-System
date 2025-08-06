@@ -1,12 +1,14 @@
-const Alumno = require("../models/alumnos");
-const Plantel = require("../models/planteles");
-const Asistencia = require("../models/asistencias");
-const moment = require("moment");
-const axios = require("axios");
-const FormData = require("form-data");
+// Importación de modelos de base de datos y librerías necesarias
+const Alumno = require("../models/alumnos");           // Modelo para los alumnos
+const Plantel = require("../models/planteles");        // Modelo para los planteles escolares
+const Asistencia = require("../models/asistencias");   // Modelo para las asistencias (aunque no se utiliza aquí)
+const moment = require("moment");                      // Librería para manipulación de fechas (no se usa en este archivo)
+const axios = require("axios");                        // Cliente HTTP para hacer solicitudes externas
+const FormData = require("form-data");                 // Para enviar datos tipo formulario, útil para imágenes
 
 // ADMINISTRADOR - Crear alumno individual
 async function crearAlumnoIndividual(req, res) {
+  // Extrae los datos del alumno desde el cuerpo de la solicitud
   const {
     matricula,
     nombre,
@@ -17,29 +19,35 @@ async function crearAlumnoIndividual(req, res) {
     contacto,
   } = req.body;
 
+  // Validaciones para asegurar que los campos requeridos estén presentes
   if (!matricula) return res.status(400).send({ msg: "Matricula es requerida" });
   if (!nombre) return res.status(400).send({ msg: "Nombre es requerido" });
   if (!grupo) return res.status(400).send({ msg: "Grupo es requerido" });
   if (!ciclo_escolar) return res.status(400).send({ msg: "Ciclo escolar es requerido" });
   if (!contacto) return res.status(400).send({ msg: "Contacto es requerido" });
 
+  // Verifica que se haya enviado una imagen
   if (!req.file) {
-    return res.status(400).send({ msg: "Imagen es requerida"});
+    return res.status(400).send({ msg: "Imagen es requerida" });
   }
 
   try {
+    // Prepara los datos del formulario con la imagen
     const formData = new FormData();
-    formData.append("imagen",req.file.buffer, {
+    formData.append("imagen", req.file.buffer, {
       filename: req.file.originalname,
-      constentType: req.file.mimetype,
+      constentType: req.file.mimetype, // Posible error tipográfico: debería ser "contentType"
     });
 
+    // Envía la imagen al microservicio Django para obtener el encoding facial
     const djangoResponse = await axios.post("http://127.0.0.1:8000/api/encoding/", formData, {
       headers: formData.getHeaders(),
     });
 
+    // Obtiene el encoding facial de la respuesta
     const encoding = djangoResponse.data.encoding;
 
+    // Crea un nuevo alumno con los datos y el encoding
     const alumno = new Alumno({
       matricula,
       nombre,
@@ -51,6 +59,7 @@ async function crearAlumnoIndividual(req, res) {
       encoding,
     });
 
+    // Guarda el alumno en la base de datos
     const userStorage = await alumno.save();
     res.status(201).send(userStorage);
   } catch (error) {
@@ -59,11 +68,12 @@ async function crearAlumnoIndividual(req, res) {
   }
 }
 
-// ADMINISTRADOR - Crear lista de alumnos
+// ADMINISTRADOR - Crear lista de alumnos (carga masiva)
 async function crearListaAlumnos(req, res) {
-  const alumnosArray = req.body;
+  const alumnosArray = req.body; // Arreglo con múltiples alumnos
 
   try {
+    // Inserta todos los alumnos al mismo tiempo
     const alumnosCreados = await Alumno.insertMany(alumnosArray);
     res.status(201).send({
       msg: "Éxito al cargar la lista de alumnos",
@@ -75,11 +85,12 @@ async function crearListaAlumnos(req, res) {
   }
 }
 
-// ADMINISTRADOR - Eliminar alumno
+// ADMINISTRADOR - Eliminar alumno por matrícula
 async function borrarAlumno(req, res) {
   const { matricula } = req.params;
 
   try {
+    // Busca y elimina el alumno con la matrícula especificada
     const alumnoEliminado = await Alumno.findOneAndDelete({ matricula });
 
     if (!alumnoEliminado) {
@@ -93,7 +104,7 @@ async function borrarAlumno(req, res) {
   }
 }
 
-// ADMINISTRADOR - Actualizar alumno
+// ADMINISTRADOR - Actualizar datos de un alumno
 async function actualizarAlumno(req, res) {
   const {
     matricula,
@@ -106,6 +117,7 @@ async function actualizarAlumno(req, res) {
   } = req.body;
 
   try {
+    // Busca al alumno por matrícula y actualiza los campos especificados
     const alumnoActualizado = await Alumno.findOneAndUpdate(
       { matricula },
       {
@@ -119,7 +131,7 @@ async function actualizarAlumno(req, res) {
           contacto,
         },
       },
-      { new: true }
+      { new: true } // Para devolver el documento actualizado
     );
 
     if (!alumnoActualizado) {
@@ -136,8 +148,7 @@ async function actualizarAlumno(req, res) {
 // ADMINISTRADOR - Obtener todos los alumnos
 async function obtenerAlumnos(req, res) {
   try {
-    const alumnos = await Alumno.find();
-
+    const alumnos = await Alumno.find(); // Recupera todos los alumnos
     res.status(200).send(alumnos);
   } catch (error) {
     console.error(error);
@@ -150,7 +161,7 @@ async function obtenerUnicoAlumno(req, res) {
   const { matricula } = req.params;
 
   try {
-    const alumno = await Alumno.findOne({ matricula });
+    const alumno = await Alumno.findOne({ matricula }); // Busca alumno por matrícula
 
     if (!alumno) {
       return res.status(404).send({ msg: "Alumno no encontrado" });
@@ -163,19 +174,21 @@ async function obtenerUnicoAlumno(req, res) {
   }
 }
 
-// ADMINISTRADOR - Contar alumnos por plantel
+// ADMINISTRADOR - Contar alumnos por plantel (basado en la letra del grupo)
 async function contarAlumnosPorPlantel(req, res) {
   try {
     const { plantel } = req.query;
 
     let planteles = [];
 
+    // Si se especifica un plantel, lo busca por clave; si no, obtiene todos
     if (plantel) {
       planteles = await Plantel.find({ clave: plantel });
     } else {
       planteles = await Plantel.find();
     }
 
+    // Estructura para almacenar la información por plantel
     const alumnosPorPlantel = {};
     for (const p of planteles) {
       alumnosPorPlantel[p.clave] = {
@@ -185,8 +198,9 @@ async function contarAlumnosPorPlantel(req, res) {
       };
     }
 
-    const alumnos = await Alumno.find();
+    const alumnos = await Alumno.find(); // Obtiene todos los alumnos
 
+    // Clasifica cada alumno en su plantel según la segunda letra del grupo (ej. "A1" → "1")
     for (const alumno of alumnos) {
       const letraPlantel = alumno.grupo[1];
       if (alumnosPorPlantel[letraPlantel]) {
@@ -199,6 +213,7 @@ async function contarAlumnosPorPlantel(req, res) {
       }
     }
 
+    // Convierte el objeto de resultados en un arreglo para responderlo
     const respuesta = Object.values(alumnosPorPlantel);
 
     res.status(200).json(respuesta);
@@ -208,6 +223,87 @@ async function contarAlumnosPorPlantel(req, res) {
   }
 }
 
+async function obtenerPorGrupo(req, res) {
+  const { grupo } = req.body;
+  try {
+    const alumnos = await Alumno.find({ grupo });
+    res.status(200).json(alumnos);
+  } catch (err) {
+    res.status(500).json({ mensaje: "Error al obtener alumnos por grupo", error: err });
+  }
+};
+
+// Obtener alumnos sin encoding (vacío o inexistente), con filtro opcional
+async function sinEncoding(req, res) {
+  try {
+    const { query } = req.query;
+
+    const filtroEncoding = {
+      $or: [
+        { encoding: { $exists: false } },
+        { encoding: { $size: 0 } }
+      ]
+    };
+
+    // Si hay texto para buscar, añadimos el filtro con regex
+    let filtro = filtroEncoding;
+
+    if (query && query.trim()) {
+      const regex = new RegExp(query.trim(), 'i');
+      filtro = {
+        $and: [
+          filtroEncoding,
+          {
+            $or: [
+              { nombre: regex },
+              { matricula: regex }
+            ]
+          }
+        ]
+      };
+    }
+
+    const alumnos = await Alumno.find(filtro);
+    res.status(200).json(alumnos);
+  } catch (error) {
+    console.error('Error al obtener alumnos sin encoding:', error);
+    res.status(500).json({ msg: "Error al obtener los alumnos" });
+  }
+}
+
+// Actualizar encoding por matrícula
+async function actualizarEncoding(req, res) {
+  try {
+    const { matricula, encoding } = req.body;
+
+    if (!matricula || !encoding) {
+      return res.status(400).json({ mensaje: "Matrícula y encoding son requeridos." });
+    }
+
+    const matriculaLimpia = matricula.trim();
+    //console.log("Matrícula recibida:", matriculaLimpia, typeof matriculaLimpia);
+    //console.log("Encoding recibido:", encoding, Array.isArray(encoding));
+
+    // Buscar alumno
+    const alumno = await Alumno.findOne({ matricula: matriculaLimpia });
+    //console.log("¿Alumno encontrado?", alumno);
+
+    if (!alumno) {
+      return res.status(404).json({ mensaje: "Alumno no encontrado." });
+    }
+
+    // Actualizar encoding
+    alumno.encoding = encoding;
+    await alumno.save();
+
+    res.json({ mensaje: "Encoding actualizado correctamente." });
+  } catch (error) {
+    console.error("Error al actualizar encoding:", error);
+    res.status(500).json({ mensaje: "Error del servidor." });
+  }
+}
+
+// Exporta todas las funciones para ser usadas en rutas u otros módulos
 module.exports = {
   crearAlumnoIndividual,
   crearListaAlumnos,
@@ -216,4 +312,7 @@ module.exports = {
   obtenerAlumnos,
   obtenerUnicoAlumno,
   contarAlumnosPorPlantel,
+  obtenerPorGrupo,
+  sinEncoding,
+  actualizarEncoding,
 };

@@ -1,18 +1,22 @@
+.contenedor-calendario {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .calendario {
-    width: 300px;
-    margin: 0 auto;
-    font-family: Arial, sans-serif;
-    background-color: #FFFFFF;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 3px;
+  width: 100%;
+  max-width: 900px; /* Ajusta el tamaño máximo como prefieras */
+  padding: 1rem;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
 }
 
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .header h1 {
@@ -30,10 +34,11 @@
 }
 
 .dias-semana {
-    display: flex;
-    background-color: #f2f2f2;
-    border-radius: 5px;
-    margin-bottom: 2px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-weight: bold;
+  text-align: center;
+  margin-top: 1rem;
 }
 
 .dias-semana div {
@@ -44,9 +49,14 @@
 }
 
 .dias {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.existing {
+    background-color: #FD7E14;
+    color: #fff;
 }
 
 .day {
@@ -58,8 +68,20 @@
     font-size: 10px;
 }
 
+.day,
 .empty-day {
-    background-color: #f5f5f5;
+  aspect-ratio: 1 / 1;
+  background-color: white;
+  border: 1px solid #ddd;
+  text-align: center;
+  line-height: 2.5rem;
+  cursor: pointer;
+  font-size: 1.2rem;
+  border-radius: 0.5rem;
+}
+
+.day:hover {
+  background-color: #f0f0f0;
 }
 
 .different-month {
@@ -67,16 +89,20 @@
 }
 
 .selected {
-    background-color: #3498db;
-    color: #fff;
+  background-color: #ffa500; /* naranja */
+  color: white;
 }
 
 .existing {
-    background-color: #FD7E14;
-    color: #fff;
+  background-color: #ff9800; /* más fuerte */
+  color: white;
 }
 
 .guardarF {
     width: 100%;
 }
 
+.nolaborable {
+  background-color: #ffcc80; /* naranja claro */
+  color: black;
+}

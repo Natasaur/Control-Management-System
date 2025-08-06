@@ -17,6 +17,8 @@ import Tabla from "./Components/Usuarios/Tabla";
 import TablaV from "./Components/Usuarios/TablaV";
 import Alertas from "./Components/Alertas/Alertas";
 import Parametros from "./Components/Parametros/Parametros";
+import EliminarA from "./Components/Asistencias/eliminarA";
+import AsignarFoto from "./Components/AlumnosYGrupos/asignarEncoding";
 
 
 import Cookies from 'js-cookie';
@@ -170,11 +172,13 @@ const App = () => {
             {/* Asistencias */}
             <Route path="/asistencias/manual" element={<AsistenciaManual />} />
             <Route path="/asistencias/visualizar" element={<TablaVAsistencias />} />
+            <Route path="/asistencias/eliminar" element={<EliminarA />} />
 
             {/* Alumnos y grupos */}
             <Route path="/alumnos/crear" element={<CrearUnicoAlumno />} />
             <Route path="/alumnos/tabla" element={<TablaAlumnos />} />
             <Route path="/alumnos/visualizar" element={<TablaVA />} />
+            <Route path="/alumnos/asignarEncoding" element={<AsignarFoto />} />
 
             {/* Usuarios */}
             <Route path="/usuarios/crear" element={<CrearUnicoU />} />

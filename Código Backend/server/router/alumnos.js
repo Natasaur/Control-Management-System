@@ -8,41 +8,45 @@ const upload = multer({ storage });
 
 const api = express.Router();
 
-api.post(
-  "/alumno/crear/individual",
-  upload.single("imagen"),
-  [authAdmin],
-  alumnosController.crearAlumnoIndividual
-);
-api.post(
-  "/alumno/crear/lista",
-  [authAdmin],
-  alumnosController.crearListaAlumnos
-);
-api.delete(
-  "/alumno/eliminar/:matricula",
-  [authAdmin],
-  alumnosController.borrarAlumno
-);
-api.patch(
-  "/alumno/actualizar",
-  [authAdmin],
-  alumnosController.actualizarAlumno
-);
-api.get(
-  "/alumno/todos",
-  [authAdmin],
-  alumnosController.obtenerAlumnos
-);
-api.get(
-  "/alumno/:matricula",
-  [authAdmin],
-  alumnosController.obtenerUnicoAlumno
-);
+api.post("/alumno/porGrupo", alumnosController.obtenerPorGrupo);
+api.get("/alumno/sinEncoding", alumnosController.sinEncoding);
+api.put("/alumno/actualizarEncoding", alumnosController.actualizarEncoding);
 api.post(
   "/alumno/contarAsistenciaPorPlantel",
   //[authAdmin],
   alumnosController.contarAlumnosPorPlantel
+);
+api.post(
+  "/alumno/crear/individual",
+  upload.single("imagen"),
+  //[authAdmin],
+  alumnosController.crearAlumnoIndividual
+);
+api.post(
+  "/alumno/crear/lista",
+  //[authAdmin],
+  alumnosController.crearListaAlumnos
+);
+api.delete(
+  "/alumno/eliminar/:matricula",
+  //[authAdmin],
+  alumnosController.borrarAlumno
+);
+api.patch(
+  "/alumno/actualizar",
+  //[authAdmin],
+  alumnosController.actualizarAlumno
+);
+api.get(
+  "/alumno/todos",
+  //[authAdmin],
+  alumnosController.obtenerAlumnos
+);
+
+api.get(
+  "/alumno/:matricula",
+  //[authAdmin],
+  alumnosController.obtenerUnicoAlumno
 );
 
 module.exports = api;

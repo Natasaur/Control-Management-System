@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './CSS/calendario.css';
-import { Button, Alert, Card } from 'react-bootstrap';
+import { Button, Alert, Card, Modal } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -8,14 +8,34 @@ import { ENV } from '../../utils/Constants';
 
 export default function Calendario() {
     const BASE_PATH = ENV.BASE_PATH;
-    const RouteFE = ENV.API_ROUTES.idfg8SRgSCyRAAYLi5aFtzhLw0Tl1hQEF;
-    const RouteFC = ENV.API_ROUTES.cRaXoJXJBEMdhYvVCe75aWMeza5TcbwCF;
-    const RouteFB = ENV.API_ROUTES.QqKu8VqZBGbet6PBK5xv4DPosMAskKyEOF;
+    //const RouteFE = ENV.API_ROUTES.idfg8SRgSCyRAAYLi5aFtzhLw0Tl1hQEF;
+    //const RouteFC = ENV.API_ROUTES.cRaXoJXJBEMdhYvVCe75aWMeza5TcbwCF;
+    //const RouteFB = ENV.API_ROUTES.QqKu8VqZBGbet6PBK5xv4DPosMAskKyEOF;
+
     const [modalidad, setModalidad] = useState('');
+    const [motivo, setMotivo] = useState('');
     const [fechasSeleccionadas, setFechasSeleccionadas] = useState([]);
     const [fechasExistentes, setFechasExistentes] = useState([]);
+    const [fechasNoLaborables, setFechasNoLaborables] = useState([]);
     const [alerta, setAlerta] = useState(null);
+    const [mostrarModal, setMostrarModal] = useState(false);
+    const [diaSeleccionado, setDiaSeleccionado] = useState(null);
+
+
     const token = Cookies.get('token');
+
+    const obtenerDiasNoLaborables = async () => {
+        try {
+            const url = `${BASE_PATH}/diasnolaborables/obtenerDias`;
+            const response = await axios.get(url, {
+                headers: { Authorization: `${token}` }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error al obtener los días no laborables', error);
+            return [];
+        }
+    };
 
     const handleCambio = (event) => {
         const selectedModalidad = event.target.value;
@@ -55,121 +75,121 @@ export default function Calendario() {
         const year = fechaActual.getFullYear();
         const month = fechaActual.getMonth();
         const date = new Date(year, month, dia);
-    
+        setDiaSeleccionado(date);
+        setMostrarModal(true);
+    };
+
+    const confirmarSeleccion = () => {
+        const date = diaSeleccionado;
+        const fechaStr = formatoFecha(date);
+
         if (!modalidad) {
-            mostrarAlerta('Selecciona una modalidad antes de seleccionar fechas.', 'danger');
+            mostrarAlerta('Selecciona una modalidad.', 'danger');
             return;
         }
-    
-        const esMesDiferente = fechaActual.getMonth() !== date.getMonth();
-    
-        if (esMesDiferente) {
+
+        if (fechasNoLaborables.includes(fechaStr)) {
+            mostrarAlerta('Esta fecha ya está registrada.', 'danger');
             return;
         }
-    
+
         const fechaSeleccionada = {
-            fecha: formatoFecha(date),
+            fecha: fechaStr,
             semana: obtenerNumeroSemana(date),
             modalidad: modalidades[modalidad],
+            motivo: motivo || 'Sin especificar',
         };
-    
-        const fechaExistenteModalidad = fechasExistentes.find(
-            (fecha) => fecha.fecha === fechaSeleccionada.fecha && fecha.modalidad === fechaSeleccionada.modalidad
+
+        const yaExiste = fechasExistentes.find(
+            (f) => f.fecha === fechaStr && f.modalidad === modalidades[modalidad]
+        ) || fechasSeleccionadas.find(
+            (f) => f.fecha === fechaStr && f.modalidad === modalidades[modalidad]
         );
-    
-        const fechaSeleccionadaModalidad = fechasSeleccionadas.find(
-            (fecha) => fecha.fecha === fechaSeleccionada.fecha && fecha.modalidad === fechaSeleccionada.modalidad
-        );
-    
-        if (fechaExistenteModalidad) {
-            alert('Esta fecha ya está seleccionada en la modalidad actual.');
+
+        if (yaExiste) {
+            mostrarAlerta('Esta fecha ya fue seleccionada.', 'warning');
             return;
         }
-    
-        if (fechaSeleccionadaModalidad) {
-            alert('Esta fecha ya está seleccionada en la lista actual de fechas.');
-            return;
-        }
-    
+
         setFechasSeleccionadas([...fechasSeleccionadas, fechaSeleccionada]);
+        setMostrarModal(false);
     };
-    
+
 
     const guardarFechas = async () => {
         if (fechasSeleccionadas.length === 0) {
-            mostrarAlerta('No hay fechas seleccionadas para guardar.', 'danger');
+            mostrarAlerta("No hay fechas seleccionadas para guardar.", "danger");
             return;
         }
 
-        try {
-            const fechasModalidadSeleccionada = fechasExistentes.filter(
-                (fecha) => fecha.modalidad === modalidades[modalidad]
-            );
+        const url = `${BASE_PATH}/diasnolaborables/crearDia`;
 
-            if (fechasModalidadSeleccionada.length > 0) {
-                // Eliminar las fechas existentes de la modalidad seleccionada antes de guardar las nuevas fechas
-                const urlFE = `${BASE_PATH}${RouteFE}`;
-                await axios.delete(urlFE, {
-                    data: fechasModalidadSeleccionada,
-                    headers: {
-                        Authorization: `${token}`,
-                    },
+        try {
+            for (const fecha of fechasSeleccionadas) {
+                const body = {
+                    fecha: fecha.fecha,
+                    modalidad: fecha.modalidad,
+                    motivo: fecha.motivo,
+                };
+
+                await axios.post(url, body, {
+                    headers: { Authorization: `${token}` },
                 });
             }
 
-            // Guardar las nuevas fechas seleccionadas
-            const urlFC = `${BASE_PATH}${RouteFC}`;
-            await axios.post(urlFC, fechasSeleccionadas, {
-                headers: {
-                    Authorization: `${token}`,
-                },
-            });
-
-            mostrarAlerta('Fechas guardadas exitosamente', 'success');
-            console.log(fechasSeleccionadas);
-            getFechasExistentes(); // Actualizar fechas existentes después de guardar
-            setFechasSeleccionadas([]); // Limpiar las fechas seleccionadas después de guardar
+            mostrarAlerta("Fechas no laborables guardadas correctamente.", "success");
+            setFechasSeleccionadas([]);
+            setMotivo("");
+            getFechasExistentes(); // Recarga los días del mes
         } catch (error) {
-            console.log(error);
-            mostrarAlerta('Error al guardar las fechas', 'danger');
+            console.error("Error al guardar las fechas:", error);
+            mostrarAlerta(
+                error?.response?.data?.message || "Error al guardar las fechas.",
+                "danger"
+            );
         }
     };
 
     const getFechasExistentes = async () => {
+        const inicioMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
+        const finMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
+
+        const url = `${BASE_PATH}/diasnolaborables/obtenerDias`;
+
         try {
-            const urlFB = `${BASE_PATH}${RouteFB}`;
-            const response = await axios.get(urlFB, {
-                headers: {
-                    Authorization: `${token}`,
+            const response = await axios.post(
+                url,
+                {
+                    fechaInicio: inicioMes,
+                    fechaFin: finMes,
                 },
-            });
-            setFechasExistentes(response.data);
+                {
+                    headers: { Authorization: `${token}` },
+                }
+            );
+
+            const fechas = response.data.map((f) => ({
+                fecha: formatoFecha(new Date(f.fecha)),
+                modalidad: f.modalidad,
+                motivo: f.motivo,
+            }));
+
+            setFechasExistentes(fechas);
         } catch (error) {
-            console.log(error);
-            alert('Error al obtener las fechas existentes');
+            console.error("Error al cargar fechas:", error);
+            mostrarAlerta("Error al cargar fechas del calendario", "danger");
         }
     };
 
     useEffect(() => {
-const getFechasExistentes = async () => {
-        try {
-            const urlFB = `${BASE_PATH}${RouteFB}`;
-            const response = await axios.get(urlFB, {
-                headers: {
-                    Authorization: `${token}`,
-                },
-            });
-            setFechasExistentes(response.data);
-        } catch (error) {
-            console.log(error);
-            alert('Error al obtener las fechas existentes');
-        }
-    };
-
         if (token) {
             getFechasExistentes();
+            obtenerDiasNoLaborables().then(dias => {
+                const fechas = dias.map(d => d.fecha);
+                setFechasNoLaborables(fechas);
+            });
         }
-    }, [token, BASE_PATH, RouteFB]);
+    }, [token]);
 
     const renderizarDias = () => {
         const dias = [];
@@ -182,18 +202,14 @@ const getFechasExistentes = async () => {
 
         for (let i = 1; i <= cantidadDias; i++) {
             const date = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), i);
-            const esMesDiferente = fechaActual.getMonth() !== date.getMonth();
-            const fechaSeleccionada = fechasSeleccionadas.find(
-                (fecha) => fecha.fecha === formatoFecha(date) && fecha.modalidad === modalidades[modalidad]
-            );
-            const fechaExistente = fechasExistentes.find(
-                (fecha) => fecha.fecha === formatoFecha(date) && fecha.modalidad === modalidades[modalidad]
-            );
+            const fechaStr = formatoFecha(date);
+            const seleccionada = fechasSeleccionadas.some(f => f.fecha === fechaStr && f.modalidad === modalidades[modalidad]);
+            const existente = fechasExistentes.some(f => f.fecha === fechaStr && f.modalidad === modalidades[modalidad]);
+            const noLaborable = fechasNoLaborables.includes(fechaStr);
 
             dias.push(
                 <div
-                    className={`day ${esMesDiferente ? 'different-month' : ''} ${fechaSeleccionada ? 'selected' : ''
-                        } ${fechaExistente ? 'existing' : ''}`}
+                    className={`day ${seleccionada ? 'selected' : ''} ${existente ? 'existing' : ''} ${noLaborable ? 'nolaborable' : ''}`}
                     key={`day${i}`}
                     onClick={() => manejarClickDia(i)}
                 >
@@ -207,7 +223,7 @@ const getFechasExistentes = async () => {
 
     const formatoFecha = (date) => {
         const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, 0);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${day}/${month}/${year}`;
     };
@@ -226,33 +242,71 @@ const getFechasExistentes = async () => {
     };
 
     return (
-        <Card>
-            
-            <div className="calendario">
-                <div className="header">
-                    <Button onClick={manejarMesAnterior}>&lt;</Button>
-                    <h1>{fechaActual.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}</h1>
-                    <Button onClick={manejarMesSiguiente}>&gt;</Button>
+        <div className='contenedor-calendario'>
+            <Card>
+                <div className="calendario">
+                    <div className="header">
+                        <Button onClick={manejarMesAnterior}>&lt;</Button>
+                        <h1>{fechaActual.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}</h1>
+                        <Button onClick={manejarMesSiguiente}>&gt;</Button>
+                    </div>
+
+                    <div className="modalidad mb-2">
+                        <select value={modalidad} onChange={handleCambio}>
+                            <option value="">Selecciona una modalidad</option>
+                            <option value="10">Escolarizado</option>
+                            <option value="20">Nocturno</option>
+                            <option value="30">Ejecutivo</option>
+                        </select>
+                    </div>
+
+                    <div className="dias-semana">
+                        {diasDeLaSemana.map((dia) => (
+                            <div key={dia}>{dia}</div>
+                        ))}
+                    </div>
+
+                    <div className="dias mb-4">{renderizarDias()}</div>
+
+                    {alerta && <Alert variant={alerta.tipo}>{alerta.mensaje}</Alert>}
                 </div>
-                <div className="modalidad">
-                    <select value={modalidad} onChange={handleCambio}>
-                        <option value="">Selecciona una modalidad</option>
-                        <option value="10">Escolarizado</option>
-                        <option value="20">Nocturno</option>
-                        <option value="30">Ejecutivo</option>
-                    </select>
-                </div>
-                <div className="dias-semana">
-                    {diasDeLaSemana.map((dia) => (
-                        <div key={dia}>{dia}</div>
-                    ))}
-                </div>
-                <div className="dias mb-4">{renderizarDias()}</div>
-                <Button className="guardarF" onClick={guardarFechas}>
-                    Guardar Fechas
-                </Button>
-                {alerta && <Alert variant={alerta.tipo}>{alerta.mensaje}</Alert>}
-            </div>
-        </Card>
+
+                {/* 👇 Aquí va el Modal dentro del return */}
+                <Modal show={mostrarModal} onHide={() => setMostrarModal(false)} centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Registrar día no laborable</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <div className="mb-2">
+                            <label>Modalidad</label>
+                            <select className="form-control" value={modalidad} onChange={handleCambio}>
+                                <option value="">Selecciona una modalidad</option>
+                                <option value="10">Escolarizado</option>
+                                <option value="20">Nocturno</option>
+                                <option value="30">Ejecutivo</option>
+                            </select>
+                        </div>
+                        <div className="mb-2">
+                            <label>Motivo</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={motivo}
+                                onChange={(e) => setMotivo(e.target.value)}
+                                placeholder="Ej. Evento especial, suspensión, etc."
+                            />
+                        </div>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setMostrarModal(false)}>
+                            Cancelar
+                        </Button>
+                        <Button variant="primary" onClick={confirmarSeleccion}>
+                            Confirmar
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            </Card>
+        </div>
     );
 }

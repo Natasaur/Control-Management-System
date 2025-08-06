@@ -19,6 +19,7 @@ const authRoutes = require("./router/auth");
 const alertasRoutes = require("./router/alertas");
 const plantelesRoutes = require("./router/planteles");
 const carreraRoutes = require("./router/carreras");
+const dias_no_laborablesRoutes = require("./router/dias_no_laborables");
 
 // configure static folder
 // EJEMPLO app.use(express.static("uploads"));
@@ -36,6 +37,7 @@ app.use(`/API/${process.env.API_VERSION}`, authRoutes);
 app.use(`/API/${process.env.API_VERSION}`, alertasRoutes);
 app.use(`/API/${process.env.API_VERSION}`, plantelesRoutes);
 app.use(`/API/${process.env.API_VERSION}`, carreraRoutes);
+app.use(`/API/${process.env.API_VERSION}`, dias_no_laborablesRoutes);
 
 //const cron = require("node-cron");
 const { saludar } = require("./controllers/asistencias");

@@ -1,12 +1,13 @@
-const Asistencia = require("../models/asistencias");
-const Usuario = require("../models/usuarios");
-const Fechas_asistencias = require("../models/fechas_asistencias");
-const Alumno = require("../models/alumnos");
-const Plantel = require("../models/planteles");
-const Carrera = require("../models/carreras")
-const DiasNoLaborables = require("../models/dias_no_laborables");
-const moment = require("moment"); // o Date si no quieres librerías
+// Importación de modelos de la base de datos y librerías necesarias
 
+const Asistencia = require("../models/asistencias"); // Modelo que representa los registros de asistencias de los alumnos
+const Usuario = require("../models/usuarios"); // Modelo para los usuarios del sistema (administradores, consultores, etc.)
+const Fechas_asistencias = require("../models/fechas_asistencias"); // Modelo para las fechas programadas de asistencia
+const Alumno = require("../models/alumnos"); // Modelo que representa a los alumnos
+const Plantel = require("../models/planteles"); // Modelo que representa los planteles escolares (sedes o campus)
+const Carrera = require("../models/carreras"); // Modelo que representa las carreras o programas académicos
+const DiasNoLaborables = require("../models/dias_no_laborables"); // Modelo que contiene días festivos o no laborables definidos
+const moment = require("moment"); // Librería para el manejo y manipulación de fechas y horas (puede usarse como alternativa a Date)
 
 
 //CONSULTOR
@@ -63,7 +64,6 @@ async function crearAsistenciaIndividual(req, res) {
 async function crearListaAsistencias(req, res) {
   const asistenciasArray = req.body;
 
-  //VARIABLES PARA PODER GUARDAR FECHAS Y MATRICULAS Y COMPROBAR QUE NO HAYAN ASISTENCIAS DUPLICADAS
   let matriculasArray = [];
   let fechasArray = [];
 
@@ -71,6 +71,7 @@ async function crearListaAsistencias(req, res) {
     matriculasArray.push(asistenciasArray[i].matricula);
     fechasArray.push(asistenciasArray[i].fecha);
   }
+  //VARIABLES PARA PODER GUARDAR FECHAS Y MATRICULAS Y COMPROBAR QUE NO HAYAN ASISTENCIAS DUPLICADAS
 
   const registroDuplicados = await Asistencia.find({
     matricula: { $in: matriculasArray },
@@ -102,18 +103,26 @@ async function eliminarAsistencia(req, res) {
   const { matricula, fecha } = req.body;
 
   try {
-    const asistenciaEliminada = await Asistencia.findOneAndDelete({
+    const asistencia = await Asistencia.findOneAndDelete({
       matricula,
       fecha,
     });
 
-    if (!asistenciaEliminada) {
+    if (!asistencia) {
       res.status(400).send({ msg: "Error al eliminar asistencia" });
-    } else {
-      res.status(200).send({ msg: "Asistencia eliminada" });
     }
+
+    if (!asistencia.justificada) {
+      res.status(403).json({ msg: "Solo se pueden eliminar asistencias justificadas" });
+    }
+
+    // Eliminar si está justificada
+    await Asistencia.deleteOne({ _id: asistencia._id });
+
+    res.status(200).json({ msg: "Asistencia eliminada correctamente" });
   } catch (error) {
-    throw error;
+    console.error("Error al eliminar asistencia:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
   }
 }
 
@@ -126,10 +135,10 @@ async function obtenerAsistencia(req, res) {
     let filtro = {};
 
     if (fechaInicio && fechaFin) {
-        filtro.fecha = { 
-          $gte: new Date(fechaInicio), 
-          $lte: new Date(fechaFin) 
-        };
+      filtro.fecha = {
+        $gte: new Date(fechaInicio),
+        $lte: new Date(fechaFin)
+      };
     }
 
     if (tipo_asistencia) {
@@ -494,7 +503,7 @@ async function porcentajeAsistenciaCuatrimestre(req, res) {
 //FUNCION PARA OBTENER EL PORCENTAJE DE ASISTENCIA DE ACUERDO A LAS CARRERAS DE ACUERDO A UN PLANTEL EN ESPECIFICO
 async function porcentajeAsistenciaCarrera(req, res) {
   try {
-    const { fechaInicio, fechaFin} = req.body;
+    const { fechaInicio, fechaFin } = req.body;
 
     if (!fechaInicio || !fechaFin) {
       return res.status(400).json({ msg: "Faltan fechas en el body" });
@@ -893,12 +902,6 @@ async function contarAsistenciaPorDia(req, res) {
   }
 }
 
-async function saludar() {
-  console.log("Hola buenas como estan");
-}
-
-
-
 //-----     NUEVAS FUNCIONES     -------//
 
 async function resumenAsistenciasPorGrupo(req, res) {
@@ -1016,7 +1019,7 @@ async function contarFaltasPorAlumno(req, res) {
   const { fechaInicio, fechaFin, grupo, plantel, carrera } = req.body;
 
   if (!fechaInicio || !fechaFin) {
-      return res.status(400).json({ msg: "Faltan fechas" });
+    return res.status(400).json({ msg: "Faltan fechas" });
   }
 
   // Función que intenta parsear fecha ISO o DD/MM/YYYY
@@ -1089,6 +1092,46 @@ function generarFechas(fechaInicio, fechaFin) {
   return fechas;
 }
 
+const filtrarPorGrupo = async (req, res) => {
+  try {
+    const { grupo, fechaInicio, fechaFin } = req.body;
+
+    if (!grupo) {
+      return res.status(400).json({ error: "El grupo es obligatorio." });
+    }
+
+    const filtro = { grupo };
+
+    if (fechaInicio && fechaFin) {
+      filtro.fecha = {
+        $gte: new Date(fechaInicio),
+        $lte: new Date(fechaFin)
+      };
+    }
+
+    const asistencias = await Asistencia.find(filtro);
+    res.status(200).json(asistencias);
+  } catch (error) {
+    console.error("Error al filtrar asistencias:", error);
+    res.status(500).json({ error: "Error al filtrar asistencias por grupo." });
+  }
+};
+
+// Obtener asistencias justificadas
+const obtenerJustificadas = async (req, res) => {
+  try {
+    const asistencias = await Asistencia.find({ tipo_asistencia: "justificada" }) // <-- aquí el filtro correcto
+      .select("matricula grupo ciclo_escolar fecha") // <-- seleccionamos solo los campos necesarios
+      .sort({ fecha: -1 }); // orden descendente por fecha, opcional
+
+    //console.log(`Se encontraron ${asistencias.length} asistencias justificadas`);
+    res.status(200).json(asistencias);
+  } catch (error) {
+    console.error("Error al filtrar asistencias justificadas:", error);
+    res.status(500).json({ error: "Error al filtrar asistencias justificadas." });
+  }
+};
+
 module.exports = {
   crearAsistenciaIndividual,
   crearListaAsistencias,
@@ -1101,9 +1144,10 @@ module.exports = {
   porcentajeAsistenciaGrupo,
   porcentajeAsistenciaAlumno,
   porcentajeAsistenciaDiario,
-  saludar,
   resumenAsistenciasPorGrupo,
   alumnosConFaltas,
   contarAsistenciaPorDia,
   contarFaltasPorAlumno,
+  filtrarPorGrupo,
+  obtenerJustificadas,
 };

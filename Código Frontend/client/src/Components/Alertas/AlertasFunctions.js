@@ -1,57 +1,31 @@
-// AlertasFunctions.js
-import { useState } from 'react';
-import axios from 'axios';
-import Cookies from 'js-cookie';
-import { ENV } from '../../utils/Constants';
+import { useState } from "react";
+import axios from "axios";
+import { ENV } from "../../utils/Constants";
 
 export function AlertasFunctions() {
-    const BASE_PATH = ENV.BASE_PATH;
-    const RouteAP = ENV.API_ROUTES.wgJgf1yyn1D3yYNQ0Z802IAdy517MosAP;
-    const [alertas, setAlertas] = useState([]);
-    const token = Cookies.get('token');
-    const [plantelSeleccionado, setPlantelSeleccionado] = useState('');
-    const [semanaSeleccionada, setSemanaSeleccionada] = useState('');
-    const [mostrarBotonDescarga, setMostrarBotonDescarga] = useState(false);
+  const BASE_PATH = ENV.BASE_PATH;
+  const [alertas, setAlertas] = useState([]);
+  const [mostrarBotonDescarga, setMostrarBotonDescarga] = useState(false);
 
-    const obtenerAlertas = async () => {
-        try {
-            if (plantelSeleccionado && semanaSeleccionada) {
-                const urlAP = `${BASE_PATH}${RouteAP}`;
-                const requestData = {
-                    semana: semanaSeleccionada,
-                    plantel: plantelSeleccionado,
-                };
-                console.log(requestData);
-                const response = await axios.post(urlAP, requestData, {
-                    headers: {
-                        Authorization: `${token}`,
-                    },
-                });
-                console.log(response);
-                const alumnosSinAsistencias = response.data;
-                setAlertas(alumnosSinAsistencias);
-                setMostrarBotonDescarga(true);
-            }
-        } catch (error) {
-            console.error('Error en la solicitud:', error);
-        }
-    };
+  const obtenerAlertas = async (fechaInicio, fechaFin, plantel) => {
+    try {
+      const response = await axios.post(`${BASE_PATH}/alertas/plantel`, {
+        fechaInicio,
+        fechaFin,
+        plantel,
+      });
+      setAlertas(response.data);
+      setMostrarBotonDescarga(true);
+    } catch (error) {
+      console.error("Error al obtener alertas:", error);
+      setAlertas([]);
+      setMostrarBotonDescarga(false);
+    }
+  };
 
-    const manejarCambio = (event) => {
-        const seleccion = event.target.value;
-        setPlantelSeleccionado(seleccion);
-    };
-
-    const manejarCambioSemana = (event) => {
-        const seleccion = event.target.value;
-        setSemanaSeleccionada(seleccion);
-    };
-
-    return {
-        alertas,
-        mostrarBotonDescarga,
-        obtenerAlertas,
-        manejarCambio,
-        manejarCambioSemana,
-    };
+  return {
+    alertas,
+    mostrarBotonDescarga,
+    obtenerAlertas,
+  };
 }
