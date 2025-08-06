@@ -8,6 +8,14 @@ const upload = multer({ storage });
 
 const api = express.Router();
 
+api.post("/alumno/porGrupo", alumnosController.obtenerPorGrupo);
+api.get("/alumno/sinEncoding", alumnosController.sinEncoding);
+api.put("/alumno/actualizarEncoding", alumnosController.actualizarEncoding);
+api.post(
+  "/alumno/contarAsistenciaPorPlantel",
+  //[authAdmin],
+  alumnosController.contarAlumnosPorPlantel
+);
 api.post(
   "/alumno/crear/individual",
   upload.single("imagen"),
@@ -34,17 +42,11 @@ api.get(
   //[authAdmin],
   alumnosController.obtenerAlumnos
 );
+
 api.get(
   "/alumno/:matricula",
   //[authAdmin],
   alumnosController.obtenerUnicoAlumno
 );
-api.post(
-  "/alumno/contarAsistenciaPorPlantel",
-  //[authAdmin],
-  alumnosController.contarAlumnosPorPlantel
-);
-api.post("/alumno/porGrupo", alumnosController.obtenerPorGrupo);
-
 
 module.exports = api;

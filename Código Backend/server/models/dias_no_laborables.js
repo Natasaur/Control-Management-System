@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const diasNoLaborablesSchema = new mongoose.Schema({
   fecha: {
-    type: String,
+    type: Date,
     required: true,
     unique: true
   },

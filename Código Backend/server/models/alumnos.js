@@ -17,7 +17,8 @@ const alumnosSchema = new mongoose.Schema({
 	asistencias: [],
 	encoding: {
 		type: [Number], // o Array si no usas Mongoose estrictamente
-		required: true
+		required: true,
+		default: []
 	},
 });
 

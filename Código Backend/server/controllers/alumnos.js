@@ -28,7 +28,7 @@ async function crearAlumnoIndividual(req, res) {
 
   // Verifica que se haya enviado una imagen
   if (!req.file) {
-    return res.status(400).send({ msg: "Imagen es requerida"});
+    return res.status(400).send({ msg: "Imagen es requerida" });
   }
 
   try {
@@ -224,14 +224,84 @@ async function contarAlumnosPorPlantel(req, res) {
 }
 
 async function obtenerPorGrupo(req, res) {
-    const { grupo } = req.body;
-    try {
-        const alumnos = await Alumno.find({ grupo });
-        res.status(200).json(alumnos);
-    } catch (err) {
-        res.status(500).json({ mensaje: "Error al obtener alumnos por grupo", error: err });
-    }
+  const { grupo } = req.body;
+  try {
+    const alumnos = await Alumno.find({ grupo });
+    res.status(200).json(alumnos);
+  } catch (err) {
+    res.status(500).json({ mensaje: "Error al obtener alumnos por grupo", error: err });
+  }
 };
+
+// Obtener alumnos sin encoding (vacío o inexistente), con filtro opcional
+async function sinEncoding(req, res) {
+  try {
+    const { query } = req.query;
+
+    const filtroEncoding = {
+      $or: [
+        { encoding: { $exists: false } },
+        { encoding: { $size: 0 } }
+      ]
+    };
+
+    // Si hay texto para buscar, añadimos el filtro con regex
+    let filtro = filtroEncoding;
+
+    if (query && query.trim()) {
+      const regex = new RegExp(query.trim(), 'i');
+      filtro = {
+        $and: [
+          filtroEncoding,
+          {
+            $or: [
+              { nombre: regex },
+              { matricula: regex }
+            ]
+          }
+        ]
+      };
+    }
+
+    const alumnos = await Alumno.find(filtro);
+    res.status(200).json(alumnos);
+  } catch (error) {
+    console.error('Error al obtener alumnos sin encoding:', error);
+    res.status(500).json({ msg: "Error al obtener los alumnos" });
+  }
+}
+
+// Actualizar encoding por matrícula
+async function actualizarEncoding(req, res) {
+  try {
+    const { matricula, encoding } = req.body;
+
+    if (!matricula || !encoding) {
+      return res.status(400).json({ mensaje: "Matrícula y encoding son requeridos." });
+    }
+
+    const matriculaLimpia = matricula.trim();
+    //console.log("Matrícula recibida:", matriculaLimpia, typeof matriculaLimpia);
+    //console.log("Encoding recibido:", encoding, Array.isArray(encoding));
+
+    // Buscar alumno
+    const alumno = await Alumno.findOne({ matricula: matriculaLimpia });
+    //console.log("¿Alumno encontrado?", alumno);
+
+    if (!alumno) {
+      return res.status(404).json({ mensaje: "Alumno no encontrado." });
+    }
+
+    // Actualizar encoding
+    alumno.encoding = encoding;
+    await alumno.save();
+
+    res.json({ mensaje: "Encoding actualizado correctamente." });
+  } catch (error) {
+    console.error("Error al actualizar encoding:", error);
+    res.status(500).json({ mensaje: "Error del servidor." });
+  }
+}
 
 // Exporta todas las funciones para ser usadas en rutas u otros módulos
 module.exports = {
@@ -243,4 +313,6 @@ module.exports = {
   obtenerUnicoAlumno,
   contarAlumnosPorPlantel,
   obtenerPorGrupo,
+  sinEncoding,
+  actualizarEncoding,
 };
