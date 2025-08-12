@@ -1,0 +1,9 @@
+/dist
+/server/node_modules
+.env
+constants.js
+
+
+/Código Backend/server/node_modules
+/Código Backend/server/.env
+/Código Backend/server/constants.js
