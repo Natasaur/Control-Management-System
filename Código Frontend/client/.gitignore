@@ -25,3 +25,6 @@ yarn-error.log*
 /Código Backend/server/node_modules
 /Código Backend/server/.env
 /Código Backend/server/constants.js
+
+/Código Frontend/client/build
+/Código Frontend/client/node_modules
